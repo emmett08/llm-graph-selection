@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "figure_id": "workflow-topologies",
+  "spec_sha256": "5df2fc7c760478e8df8486370ed8f4759692f6c09cd79c96ea7ce096749a953f",
+  "audit_sha256": "3dcd4a94a9c512ec078861a673b35edbf8ce5f7f152245a4618d9d8d0cc67470",
+  "artifacts": [
+    {
+      "role": "final_pdf",
+      "path": "figures/workflow-topologies.pdf",
+      "sha256": "55ba913cdc65f95e178e49e9a2cc4f1a95b648512887a0a8289946e82efb5383"
+    },
+    {
+      "role": "prototype",
+      "path": "figures/workflow-topologies.pdf",
+      "sha256": "55ba913cdc65f95e178e49e9a2cc4f1a95b648512887a0a8289946e82efb5383"
+    },
+    {
+      "role": "prototype",
+      "path": "figures/workflow-topologies-spaced-prototype.pdf",
+      "sha256": "fe750a56377a0890f4a736f69b6a63bf24557b024be8fed7744c7bdfa6f4c722"
+    }
+  ],
+  "reviewer": {
+    "id": "Independent rendered figure reviewer",
+    "kind": "agent",
+    "independence_declared": true,
+    "scope": "agent_screening"
+  },
+  "candidates": [
+    {
+      "id": "retained",
+      "prototype": "figures/workflow-topologies.pdf",
+      "observations": {
+        "reading": "The compact grid retains all six graph structures.",
+        "annotation_burden": "The caption supplies the common key. Condition labels remain beside their corresponding arrows.",
+        "reproduction": "Both rows and their labels remain legible at the physical manuscript width."
+      }
+    },
+    {
+      "id": "comparison",
+      "prototype": "figures/workflow-topologies-spaced-prototype.pdf",
+      "observations": {
+        "reading": "The expanded grid preserves the same six directed operation graphs.",
+        "annotation_burden": "The expanded grid retains the same panel titles, call labels and branch names.",
+        "reproduction": "The added vertical separation consumes about 14 mm of page height."
+      }
+    }
+  ],
+  "selected_candidate": "retained",
+  "initial_reconstruction": {
+    "claim": "Six directed graphs show the difference between single and serial calls, a gated repair, parallel drafts and parallel reviews, and conditional specialist routing.",
+    "quantities": [
+      "There are six distinct panels and no measured quantities."
+    ],
+    "evidence_status": "Panels (a), (c) and (d) show main paths of simulated workflow families. Panels (b), (e) and (f) are illustrative.",
+    "scope": "An explicit branch label selects one path. The parallel cases feed both outputs downstream. Result denotes terminal handling.",
+    "unintended_inferences": [
+      "Parallel paths do not establish speed-up. The common Result node in (c) does not guarantee acceptance."
+    ]
+  },
+  "comparison": {
+    "matches": [
+      "The three simulated families are identified correctly without implying that all six appear in the reported evaluation.",
+      "The branch and join structures are recoverable without colour."
+    ],
+    "findings": [],
+    "audit_warning_dispositions": [
+      {
+        "index": 0,
+        "disposition": "accepted",
+        "reason": "The figure uses TeX vector drawing and requires no shell-generated asset."
+      }
+    ]
+  },
+  "decision": "accept",
+  "limitations": [
+    "Human interpretation benefit remains unmeasured by agent screening."
+  ]
+}

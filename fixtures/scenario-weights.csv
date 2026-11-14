@@ -1,0 +1,5 @@
+scenario,group,weight
+nominal,routine,0.7
+nominal,migration,0.3
+adverse,routine,0.4
+adverse,migration,0.6

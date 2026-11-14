@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "retrieved_on": "2026-11-13",
+  "scope": "Published API identities, compatible reasoning controls and standard uncached text-token list prices. All simulated task quality, usage and elapsed-time laws are separately stipulated.",
+  "billing_scope": "USD per million tokens, standard direct API tier, uncached short text requests, no batch, priority, regional, tool, tax or cache charges. Reasoning tokens belong in the billable output total and must not be charged twice.",
+  "selected_efforts": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "selected_output_caps": [
+    4096,
+    8192
+  ],
+  "models": [
+    {
+      "provider": "OpenAI",
+      "model_id": "gpt-6.1-sol",
+      "display_name": "GPT-6.1 Sol",
+      "endpoint": "Responses API",
+      "effort_parameter": "reasoning.effort",
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "selected_thinking_mode": "standard",
+      "thinking_mode_parameter": "reasoning.mode",
+      "output_cap_parameter": "max_output_tokens",
+      "documented_max_output_tokens": 128000,
+      "input_usd_per_million": 2.0,
+      "output_usd_per_million": 10.0,
+      "excluded_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "top_logprobs"
+      ],
+      "advice_summary": "The provider recommends this model for complex coding, computer use and professional work. Reasoning effort controls work within the selected reasoning mode.",
+      "sources": [
+        "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+        "https://developers.openai.com/api/docs/guides/reasoning",
+        "https://developers.openai.com/api/docs/guides/deployment-checklist"
+      ]
+    },
+    {
+      "provider": "Anthropic",
+      "model_id": "claude-sonnet-5-5",
+      "display_name": "Claude Sonnet 5.5",
+      "endpoint": "Messages API",
+      "effort_parameter": "output_config.effort",
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "selected_thinking_mode": "adaptive",
+      "thinking_mode_parameter": "thinking.type",
+      "output_cap_parameter": "max_tokens",
+      "documented_max_output_tokens": 128000,
+      "input_usd_per_million": 2.0,
+      "output_usd_per_million": 10.0,
+      "excluded_sampling_parameters": [
+        "temperature",
+        "top_p",
+        "top_k"
+      ],
+      "advice_summary": "For well-specified agentic coding and multistep tool work the provider suggests starting at medium, moving to high for harder or longer work. Low or medium are suggested for latency-sensitive tasks.",
+      "sources": [
+        "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+        "https://platform.claude.com/docs/en/build-with-claude/effort"
+      ]
+    },
+    {
+      "provider": "Google",
+      "model_id": "gemini-4-hydrogen",
+      "display_name": "Gemini 4 Hydrogen",
+      "endpoint": "Interactions API",
+      "effort_parameter": "generation_config.thinking_level",
+      "supported_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "high",
+      "selected_thinking_mode": "native thinking",
+      "output_cap_parameter": "generation_config.max_output_tokens",
+      "documented_max_output_tokens": null,
+      "output_cap_scope": "Maximum total generation output is 1048576 minus input tokens. A foreground segment is limited to 65536 tokens. The selected 4096 and 8192 caps require no continuation and are legal when input plus output stays within the unified context limit.",
+      "input_usd_per_million": 1.5,
+      "output_usd_per_million": 7.5,
+      "excluded_sampling_parameters": [],
+      "sampling_scope": "The simulation varies only reasoning effort and output cap; other settings retain documented defaults.",
+      "advice_summary": "The provider describes this as a model for everyday coding and agentic execution. It recommends testing thinking levels and selecting the lowest level that meets the task quality requirement.",
+      "sources": [
+        "https://ai.google.dev/gemini-api/docs/thinking",
+        "https://ai.google.dev/gemini-api/docs/pricing",
+        "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/guides/gemini-4-hydrogen"
+      ],
+      "ignored_sampling_parameters": [
+        "temperature",
+        "top_k",
+        "top_p"
+      ],
+      "unsupported_parameters": [
+        "frequency_penalty",
+        "presence_penalty",
+        "candidate_count > 1",
+        "thinking_budget"
+      ],
+      "unified_input_output_limit": 1048576,
+      "single_segment_output_limit": 65536
+    }
+  ]
+}

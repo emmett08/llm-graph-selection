@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "profile_id": "workflow-paper",
+  "document_class": "amsart",
+  "class_options": ["11pt", "reqno"],
+  "packages": [
+    {"name": "fontenc", "options": ["T1"]},
+    {"name": "lmodern", "options": []},
+    {"name": "geometry", "options": ["a4paper", "margin=25mm"]},
+    {"name": "microtype", "options": []}
+  ],
+  "engine": "pdflatex",
+  "dependencies": []
+}

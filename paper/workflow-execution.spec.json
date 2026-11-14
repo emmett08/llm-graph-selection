@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "figure_id": "workflow-execution",
+  "purpose": {
+    "reader_question": "Which model calls run after each review decision, and which calls can inspect the source directly?",
+    "expected_reading": "The first flag triggers a single repair and a separate recheck. Either review can clear the current draft. A flag on recheck rejects it.",
+    "claim": "The first flag triggers a single repair and a separate recheck. Either review can clear the current draft. A flag on recheck rejects it.",
+    "scope": "An illustrative release-note workflow consistent with the simulated serial family on the main path.",
+    "permitted_inferences": [
+      "Order of operations, branches and message availability shown."
+    ],
+    "prohibited_inferences": [
+      "Runtime, cost, defect rate or provider ranking from graph layout."
+    ]
+  },
+  "inputs": [
+    {
+      "id": "source-1",
+      "path": "main.tex",
+      "status": "illustrative",
+      "source_reference": "Section 2, equations (1) and (2) and the release-note example."
+    },
+    {
+      "id": "source-2",
+      "path": "reproducibility/simulate_workflows.py",
+      "status": "simulated",
+      "source_reference": "One repair and separate final review."
+    }
+  ],
+  "constructions": [
+    {
+      "id": "directed-graph",
+      "kind": "topology",
+      "definition": "Directed graph with an explicitly declared node set and directed adjacency.",
+      "method": "TikZ graphs declares adjacency over vertices with fixed layout coordinates. The caption defines scope.",
+      "input_ids": [
+        "source-1",
+        "source-2"
+      ]
+    }
+  ],
+  "encodings": [
+    {
+      "id": "calls",
+      "marks": "Direct model call labels",
+      "mark_role": "diagram_node",
+      "channel": "text",
+      "represents": "Four calls carry individual setting tuples.",
+      "interpretation": "relational",
+      "construction_ids": [
+        "directed-graph"
+      ],
+      "scale_or_mapping": {
+        "type": "nonmetric",
+        "definition": "Four calls carry individual setting tuples."
+      }
+    },
+    {
+      "id": "flow",
+      "marks": "Solid arrows",
+      "mark_role": "data_mark",
+      "channel": "incidence",
+      "represents": "Execution paths with data or branch labels.",
+      "interpretation": "relational",
+      "construction_ids": [
+        "directed-graph"
+      ],
+      "scale_or_mapping": {
+        "type": "nonmetric",
+        "definition": "Execution paths with data or branch labels."
+      }
+    },
+    {
+      "id": "evidence",
+      "marks": "Dashed arrows",
+      "mark_role": "data_mark",
+      "channel": "continuity",
+      "represents": "Direct availability of source evidence independently of the draft.",
+      "interpretation": "relational",
+      "construction_ids": [
+        "directed-graph"
+      ],
+      "scale_or_mapping": {
+        "type": "nonmetric",
+        "definition": "Direct availability of source evidence independently of the draft."
+      }
+    }
+  ],
+  "target": {
+    "width_mm": 155,
+    "min_text_pt": 8,
+    "min_math_script_pt": 6,
+    "min_stroke_pt": 0.35,
+    "colour_intent": "colour_and_greyscale",
+    "expected_labels": [
+      "Draft",
+      "Review",
+      "Repair",
+      "Recheck",
+      "Accept",
+      "Reject",
+      "Source evidence",
+      "revised draft"
+    ],
+    "manuscript_profile": "figures/manuscript-profile.json"
+  },
+  "build": {
+    "renderer": "tikz",
+    "engine": "pdflatex",
+    "profile": "figures/manuscript-profile.json",
+    "source": "figures/workflow-execution.tikz.tex",
+    "dependencies": [
+      "figures/workflow-execution.caption.tex"
+    ],
+    "recipe": [
+      [
+        "bash",
+        "check-paper.sh"
+      ]
+    ],
+    "outputs": {
+      "pdf": "figures/workflow-execution.pdf",
+      "audit": "figures/workflow-execution.audit.json",
+      "review": "figures/workflow-execution.review.json"
+    }
+  }
+}

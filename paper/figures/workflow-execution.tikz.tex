@@ -1,0 +1,41 @@
+% Required packages: tikz
+% Required TikZ libraries: arrows.meta, graphs
+% Target width: 155 mm maximum
+% Minimum text size: 8pt
+% Colour/greyscale intent: colour and greyscale; role and edge types are labelled.
+\begin{tikzpicture}[
+  x=1mm,y=1mm,
+  every node/.style={align=center, inner sep=2pt, outer sep=0pt},
+  call/.style={text=blue!40!black, font=\normalsize},
+  outcome/.style={text=black, font=\normalsize\bfseries},
+  evidence/.style={text=black!78, font=\small},
+  edge text/.style={text=black!85, font=\small, inner sep=1.4pt},
+  execution/.style={
+    draw=black!85, line width=.65pt,
+    -{Stealth[length=2.3mm,width=1.45mm]}, shorten >=.7pt, shorten <=.7pt},
+  source access/.style={
+    draw=black!65, dash pattern=on 2.3pt off 1.5pt, line width=.55pt,
+    -{Stealth[length=2mm,width=1.3mm]}, shorten >=.7pt, shorten <=.7pt}
+]
+  \path[use as bounding box] (-2,-34) rectangle (149,8);
+  \node[call] (draft) at (9,0) {\textbf{Draft}\\[-.25ex]$s_1$};
+  \node[call] (review) at (45,0) {\textbf{Review}\\[-.25ex]$s_2$};
+  \node[call] (repair) at (45,-25) {\textbf{Repair}\\[-.25ex]$s_3$};
+  \node[call] (recheck) at (95,-25) {\textbf{Recheck}\\[-.25ex]$s_4$};
+  \node[outcome] (accept) at (137,0) {Accept};
+  \node[outcome] (reject) at (137,-25) {Reject};
+  \node[evidence] (source) at (84,-12) {Source evidence};
+
+  \graph[use existing nodes, edges={execution}] {
+    draft ->[edge node={node[edge text,above,yshift=1mm]{draft}}] review;
+    review ->[edge node={node[edge text,above,yshift=1mm]{clear}}] accept;
+    review ->[edge node={node[edge text,left]{flag}}] repair;
+    repair ->[edge node={node[edge text,below]{revised draft}}] recheck;
+    recheck ->[edge node={node[edge text,above,yshift=2.2mm]{clear}}] accept;
+    recheck ->[edge node={node[edge text,below]{flag}}] reject;
+  };
+  \graph[use existing nodes, edges={source access}] {
+    source -> review;
+    source -> recheck;
+  };
+\end{tikzpicture}

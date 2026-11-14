@@ -1,0 +1,12 @@
+[package]
+name = "llm-workflow-optimiser"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Scenario-constrained selection of measured LLM workflow graphs"
+readme = "README.md"
+license = "GPL-3.0-only"
+repository = "https://github.com/emmett08/llm-graph-selection"
+exclude = ["/paper/", "/.github/"]
+
+[dependencies]

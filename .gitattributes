@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+
+# Keep the archived experiment CSV files byte-for-byte, including CRLF.
+/paper/reproducibility/*.csv -text whitespace=cr-at-eol
+/fixtures/population-moments.csv -text whitespace=cr-at-eol

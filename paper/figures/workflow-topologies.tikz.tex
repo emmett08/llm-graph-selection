@@ -1,0 +1,88 @@
+% Required packages: tikz
+% Required TikZ libraries: arrows.meta, graphs
+% Target width: 160 mm maximum
+% Minimum text size: 8 pt
+% Colour/greyscale intent: colour and greyscale
+% Directed edge shafts: 0.55 pt
+% Dark blue bold text identifies an LLM call, redundantly with its operation name.
+% Every arrow links two operations or a workflow boundary. The panel geometry
+% describes adjacency and branching. Vertical gaps do not represent elapsed time.
+\begin{tikzpicture}[
+  x=1mm,y=1mm,
+  title/.style={font=\fontsize{9.5}{11}\selectfont\bfseries,inner sep=0pt},
+  vertex/.style={font=\fontsize{8.5}{10}\selectfont,inner xsep=2pt,inner ysep=2pt,align=center},
+  llm/.style={vertex,font=\fontsize{8.5}{10}\selectfont\bfseries,text=blue!45!black},
+  condition/.style={font=\fontsize{8}{9}\selectfont\itshape,inner sep=1pt},
+  every edge/.style={draw=black!75,line width=.55pt,>={Stealth[length=3.8pt,width=3.2pt]}},
+]
+\path[use as bounding box] (0,-96) rectangle (156,3);
+
+% All panels start at the top. Each compares structure at the same physical size.
+\begin{scope}[xshift=26mm]
+  \node[title] at (0,0) {(a) Single call};
+  \node[vertex] (atask) at (0,-8) {Task};
+  \node[llm] (adraft) at (0,-26) {Draft};
+  \node[vertex] (aresult) at (0,-43) {Result};
+  \graph[use existing nodes] {atask -> adraft -> aresult;};
+\end{scope}
+
+\begin{scope}[xshift=78mm]
+  \node[title] at (0,0) {(b) Serial review};
+  \node[vertex] (btask) at (0,-8) {Task};
+  \node[llm] (bdraft) at (0,-19) {Draft};
+  \node[llm] (breview) at (0,-32) {Review};
+  \node[vertex] (bresult) at (0,-43) {Result};
+  \graph[use existing nodes] {btask -> bdraft -> breview -> bresult;};
+\end{scope}
+
+\begin{scope}[xshift=130mm]
+  \node[title] at (0,0) {(c) One repair};
+  \node[vertex] (ctask) at (-12,-8) {Task};
+  \node[llm] (cdraft) at (-12,-17) {Draft};
+  \node[llm] (creview) at (-12,-26) {Review};
+  \node[llm] (crepair) at (13,-26) {Repair};
+  \node[llm] (crecheck) at (13,-35) {Recheck};
+  \node[vertex] (cresult) at (-12,-43) {Result};
+  \graph[use existing nodes] {
+    ctask -> cdraft -> creview;
+    creview ->[edge node={node[condition,left] {clear}}] cresult;
+    creview ->[edge node={node[condition,above] {flag}}] crepair -> crecheck -> cresult;
+  };
+\end{scope}
+
+\begin{scope}[xshift=26mm,yshift=-51mm]
+  \node[title] at (0,0) {(d) Parallel drafts};
+  \node[vertex] (dtask) at (0,-8) {Task};
+  \node[llm] (ddrafta) at (-13,-21) {Draft A};
+  \node[llm] (ddraftb) at (13,-21) {Draft B};
+  \node[llm] (dmerge) at (0,-33) {Merge + check};
+  \node[vertex] (dresult) at (0,-43) {Result};
+  \graph[use existing nodes] {dtask -> {ddrafta,ddraftb} -> dmerge -> dresult;};
+\end{scope}
+
+\begin{scope}[xshift=78mm,yshift=-51mm]
+  \node[title] at (0,0) {(e) Parallel reviews};
+  \node[vertex] (etask) at (0,-8) {Task};
+  \node[llm] (edraft) at (0,-16.5) {Draft};
+  \node[llm] (ereviewa) at (-13,-25) {Review A};
+  \node[llm] (ereviewb) at (13,-25) {Review B};
+  \node[llm] (eadjudicate) at (0,-34.5) {Adjudicate};
+  \node[vertex] (eresult) at (0,-43) {Result};
+  \graph[use existing nodes] {etask -> edraft -> {ereviewa,ereviewb} -> eadjudicate -> eresult;};
+\end{scope}
+
+\begin{scope}[xshift=130mm,yshift=-51mm]
+  \node[title] at (0,0) {(f) Specialist routing};
+  \node[vertex] (ftask) at (0,-8) {Task};
+  \node[vertex] (frule) at (0,-16.5) {Routing rule};
+  \node[llm] (froutine) at (-13,-27) {Generalist};
+  \node[llm] (fspecialist) at (13,-27) {Specialist};
+  \node[llm] (freview) at (13,-35) {Review};
+  \node[vertex] (fresult) at (0,-43) {Result};
+  \graph[use existing nodes] {
+    ftask -> frule;
+    frule ->[edge node={node[condition,left,xshift=-5.5pt] {routine}}] froutine -> fresult;
+    frule ->[edge node={node[condition,right,xshift=5.5pt] {specialist}}] fspecialist -> freview -> fresult;
+  };
+\end{scope}
+\end{tikzpicture}

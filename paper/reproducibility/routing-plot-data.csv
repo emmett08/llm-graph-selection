@@ -1,0 +1,6 @@
+group,label,weight,candidate
+routine,"Serial low 4,096-token cap",0.5754787945436428,gemini-4-hydrogen__serial__low__4096
+routine,"Serial medium 4,096-token cap",0.4245212054563572,gemini-4-hydrogen__serial__medium__4096
+migration,"Serial medium 4,096-token cap",0.6355462535032641,gemini-4-hydrogen__serial__medium__4096
+migration,Reject,0.30386031646533496,reject
+migration,"Single high 8,192-token cap",0.06059343003140097,gemini-4-hydrogen__single__high__8192

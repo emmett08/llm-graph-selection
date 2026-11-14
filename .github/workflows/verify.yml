@@ -1,0 +1,56 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install Rust
+        run: rustup toolchain install 1.85.1 --profile minimal --component rustfmt --component clippy
+      - name: Check formatting
+        run: cargo +1.85.1 fmt --all --check
+      - name: Lint
+        run: cargo +1.85.1 clippy --locked --offline --all-targets -- -D warnings
+      - name: Run Rust tests
+        run: cargo +1.85.1 test --locked --offline
+
+  paper:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Install TeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends latexmk lmodern texlive-latex-extra texlive-pictures
+      - name: Reproduce study
+        working-directory: paper
+        run: |
+          python -m pip install -r reproducibility/requirements.txt
+          python reproducibility/simulate_workflows.py
+          python reproducibility/verify_exact_example.py
+          python reproducibility/refine_selection.py
+          python reproducibility/fractional_check.py
+      - name: Build and check paper
+        run: bash paper/check-paper.sh
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: paper
+          path: paper/build/main.pdf
+          if-no-files-found: error

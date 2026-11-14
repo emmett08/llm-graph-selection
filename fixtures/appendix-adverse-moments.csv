@@ -1,0 +1,5 @@
+group,scenario,candidate,acceptance,joint_defect,cost_usd,lateness
+task,adverse,single_fast,1,0.24,1,0.1
+task,adverse,serial_review,0.8,0.048,3,0.05
+task,adverse,reject,0,0,0,0
+task,adverse,parallel_review,0.9,0.054,2.2,0.03

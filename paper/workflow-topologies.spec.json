@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0",
+  "figure_id": "workflow-topologies",
+  "purpose": {
+    "reader_question": "How do the paths and dependencies differ across six possible configurations?",
+    "expected_reading": "The grid shows single and serial calls, a gated repair, two parallel fork-and-join designs and gated specialist routing.",
+    "claim": "The grid shows single and serial calls, a gated repair, two parallel fork-and-join designs and gated specialist routing.",
+    "scope": "Three structural sketches from the simulator and three illustrative candidates. Request settings, source edges and exceptional exits are omitted.",
+    "permitted_inferences": [
+      "Order of operations, branches and message availability shown."
+    ],
+    "prohibited_inferences": [
+      "Runtime, cost, defect rate or provider ranking from graph layout."
+    ]
+  },
+  "inputs": [
+    {
+      "id": "source-1",
+      "path": "reproducibility/simulate_workflows.py",
+      "status": "simulated",
+      "source_reference": "Solo, serial and parallel draft-merge execution rules."
+    },
+    {
+      "id": "source-2",
+      "path": "main.tex",
+      "status": "illustrative",
+      "source_reference": "Section 2 permits other directed configurations with execution guards."
+    }
+  ],
+  "constructions": [
+    {
+      "id": "directed-graph",
+      "kind": "topology",
+      "definition": "Directed graph with an explicitly declared node set and directed adjacency.",
+      "method": "TikZ graphs declares adjacency over vertices with fixed layout coordinates. The caption defines scope.",
+      "input_ids": [
+        "source-1",
+        "source-2"
+      ]
+    }
+  ],
+  "encodings": [
+    {
+      "id": "calls",
+      "marks": "Direct operation labels",
+      "mark_role": "diagram_node",
+      "channel": "text",
+      "represents": "Bold call names identify model operations. Task, Result and Routing rule are boundaries or deterministic steps.",
+      "interpretation": "relational",
+      "construction_ids": [
+        "directed-graph"
+      ],
+      "scale_or_mapping": {
+        "type": "nonmetric",
+        "definition": "Bold call names identify model operations. Task, Result and Routing rule are boundaries or deterministic steps."
+      }
+    },
+    {
+      "id": "flow",
+      "marks": "Directed arrows",
+      "mark_role": "data_mark",
+      "channel": "incidence",
+      "represents": "A common predecessor feeds two parallel calls unless a label marks an exclusive branch.",
+      "interpretation": "relational",
+      "construction_ids": [
+        "directed-graph"
+      ],
+      "scale_or_mapping": {
+        "type": "nonmetric",
+        "definition": "A common predecessor feeds two parallel calls unless a label marks an exclusive branch."
+      }
+    }
+  ],
+  "target": {
+    "width_mm": 160,
+    "min_text_pt": 8,
+    "min_math_script_pt": 6,
+    "min_stroke_pt": 0.35,
+    "colour_intent": "colour_and_greyscale",
+    "expected_labels": [
+      "Single call",
+      "Serial review",
+      "One repair",
+      "Parallel drafts",
+      "Parallel reviews",
+      "Specialist routing",
+      "Recheck",
+      "Merge + check",
+      "Adjudicate"
+    ],
+    "manuscript_profile": "figures/manuscript-profile.json"
+  },
+  "build": {
+    "renderer": "tikz",
+    "engine": "pdflatex",
+    "profile": "figures/manuscript-profile.json",
+    "source": "figures/workflow-topologies.tikz.tex",
+    "dependencies": [
+      "figures/workflow-topologies.caption.tex"
+    ],
+    "recipe": [
+      [
+        "bash",
+        "check-paper.sh"
+      ]
+    ],
+    "outputs": {
+      "pdf": "figures/workflow-topologies.pdf",
+      "audit": "figures/workflow-topologies.audit.json",
+      "review": "figures/workflow-topologies.review.json"
+    }
+  }
+}

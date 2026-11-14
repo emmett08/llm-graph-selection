@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0",
+  "figure_id": "workflow-execution",
+  "spec_sha256": "b9c071d5b6068d12310df5b4568d369b31923001a2ab269f34af0a0b729a366c",
+  "audit_sha256": "647063ec8f785ec7e1d058eada0b49b2f16f0a933843ac9020e395b4d2df2b79",
+  "artifacts": [
+    {
+      "role": "final_pdf",
+      "path": "figures/workflow-execution.pdf",
+      "sha256": "70e4afe9dae718fa34ba119e59b7e73f9d80988d1f106e36d5620f22e736ba23"
+    },
+    {
+      "role": "prototype",
+      "path": "figures/workflow-execution.pdf",
+      "sha256": "70e4afe9dae718fa34ba119e59b7e73f9d80988d1f106e36d5620f22e736ba23"
+    },
+    {
+      "role": "prototype",
+      "path": "figures/workflow-execution-original-prototype.pdf",
+      "sha256": "1c6abc70c2b4e47a86602fdb4a58d71fbbda890820321c5aacb514893320e198"
+    }
+  ],
+  "reviewer": {
+    "id": "Independent rendered figure reviewer",
+    "kind": "agent",
+    "independence_declared": true,
+    "scope": "agent_screening"
+  },
+  "candidates": [
+    {
+      "id": "retained",
+      "prototype": "figures/workflow-execution.pdf",
+      "observations": {
+        "reading": "A distinct final review makes the bounded repair sequence visible.",
+        "annotation_burden": "The figure uses existing setting tuples and labels the decisions at each branch.",
+        "reproduction": "The revised arrows and labels have distinct spacing in colour and grey."
+      }
+    },
+    {
+      "id": "comparison",
+      "prototype": "figures/workflow-execution-original-prototype.pdf",
+      "observations": {
+        "reading": "The previous diagram merges repair and final review, requiring the reader to infer how many calls take place.",
+        "annotation_burden": "Each block repeats three setting symbols while the caption describes settings again.",
+        "reproduction": "The arrow returning from the combined block towards acceptance is cramped."
+      }
+    }
+  ],
+  "selected_candidate": "retained",
+  "initial_reconstruction": {
+    "claim": "A flagged draft can be repaired once and then reviewed again. Either clear review accepts its current draft. A flag on the recheck rejects it.",
+    "quantities": [
+      "Four named calls have their own setting tuples. The figure displays no measured quantities."
+    ],
+    "evidence_status": "This is an illustrative execution graph consistent with the simulated serial path.",
+    "scope": "Direct evidence is shown for Review and Recheck. The caption states what a flagged first review forwards to Repair.",
+    "unintended_inferences": [
+      "The layout supplies no runtime, quality or provider performance evidence."
+    ]
+  },
+  "comparison": {
+    "matches": [
+      "Both direct source edges and all six execution edges reconstruct as specified.",
+      "The accepted draft is the one tested on the clear branch."
+    ],
+    "findings": [
+      {
+        "id": "finding-1",
+        "severity": "minor",
+        "description": "The diagonal clear label grazed its edge in the first integrated render.",
+        "disposition": "resolved",
+        "reason": "Moved the label further above the edge and inspected the updated figure."
+      },
+      {
+        "id": "finding-2",
+        "severity": "minor",
+        "description": "The first audit reported two bounds intersections at horizontal arrow labels.",
+        "disposition": "resolved",
+        "reason": "Raised the labels by 1 mm. The updated audit reports no crossings."
+      }
+    ],
+    "audit_warning_dispositions": [
+      {
+        "index": 0,
+        "disposition": "accepted",
+        "reason": "The figure uses TeX vector drawing and requires no shell-generated asset."
+      }
+    ]
+  },
+  "decision": "accept",
+  "limitations": [
+    "Human interpretation benefit remains unmeasured by agent screening."
+  ]
+}

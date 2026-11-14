@@ -1,0 +1,5 @@
+iteration,candidate_count,cost,added_candidate,reduced_cost
+0,20,0.05419755691273641,gemini-4-hydrogen__parallel__medium__4096,-0.11568555243609002
+1,21,0.048255122663042715,gemini-4-hydrogen__serial__medium__4096,-0.0094483085787102
+2,22,0.03916671239833332,gemini-4-hydrogen__serial__low__4096,-0.0007609806560558881
+3,23,0.03879833832489504,,
