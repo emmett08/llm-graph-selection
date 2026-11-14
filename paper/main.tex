@@ -582,9 +582,11 @@ The highest defect rate is 8.24426\% of accepted outputs, and the highest
 lateness rate is 13.7539\% of attempts.
 
 \begingroup
-\setlength{\emergencystretch}{1em}
+\sloppy
 On the same sample, paired Hoeffding bounds the worst-scenario expected
-cost at USD~0.0459774 per attempt. Paired empirical Bernstein produces the lowest cost bound, USD~0.0433804 per attempt, 7.36\% below the separate Hoeffding bound.
+cost per attempt at USD~0.0459774. Paired empirical Bernstein produces
+the lowest cost bound, USD~0.0433804 per attempt, 7.36\% below the separate
+Hoeffding bound.
 Requiring service limits in each group raises
 the bounds to USD~0.0521947 per attempt for separate Hoeffding,
 USD~0.0515283 for paired Hoeffding and USD~0.0491695 for paired empirical
