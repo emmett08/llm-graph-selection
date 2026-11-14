@@ -287,7 +287,9 @@ $Dx\le ht$, $Ex=t\mathbf 1$, $a(x)=1$, $x\ge0$ and $t\ge0$.
 The equalities force $t>0$, so $w=x/t$ recovers a feasible rule with the same objective.
 One scaling also works across scenarios when their denominators are positive fixed multiples of a common linear function.
 
-At the completion and lateness limits of Appendix~\ref{app:exact}, a budget of $13/10$ in the adverse scenario alone gives minimum risk $123/1300$.
+For the adverse scenario alone, keep the completion and lateness limits of
+Appendix~\ref{app:exact} and cap expected cost at USD~1.30 per attempt.
+The minimum defect fraction among accepted outputs is $123/1300$ (about 9.46\%).
 The reproduction check obtains that value by the transformation and by bisection, with an exact rational lower bound.
 
 \section{Calibration after graph search}
@@ -691,10 +693,11 @@ The reproduction script checks the effect of adding a graph column using
 rational arithmetic and compares the result with the numerical solver.
 Take acceptance probabilities $(1,4/5,0,9/10)$ and nominal joint probabilities
 of acceptance and a material defect $(1/5,1/25,0,9/200)$ for four stipulated
-complete policies. Let costs be $(1,3,0,11/5)$ and lateness probabilities
-$(1/10,1/20,0,3/100)$. The adverse scenario multiplies the joint probabilities
-by $6/5$ and keeps the other coefficients fixed. Set minimum completion to
-$3/5$, maximum conditional defect risk to $1/10$ and maximum lateness to $2/25$.
+complete policies. The costs in USD per attempted task are $(1,3,0,11/5)$,
+and the lateness probabilities are $(1/10,1/20,0,3/100)$. The adverse scenario
+multiplies the joint probabilities by $6/5$ and keeps the other coefficients
+fixed. Set minimum completion to $3/5$, maximum conditional defect risk to
+$1/10$ and maximum lateness to $2/25$.
 
 With the first three candidates, the minimum worst-scenario cost is $113/60$
 per attempt. The multipliers for adverse-scenario defect risk and completion
