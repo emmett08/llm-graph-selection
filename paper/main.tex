@@ -521,7 +521,7 @@ counts. The cap limits the billable generated count, which includes visible
 answer tokens and counts reasoning tokens once. The simulator truncates a
 call whose desired generated count exceeds the cap and rejects the result.
 For input count $I$, capped generated count $U$ and registry prices
-$p_{\rm in},p_{\rm out}$, the call charge and duration are
+$p_{\rm in},p_{\rm out}$, the call charge $C_v$ in USD and duration $T_v$ are
 \[
 C_v=10^{-6}(p_{\rm in}I+p_{\rm out}U),\qquad
 T_v=(1+0.7S)(2+0.008I+0.012U)\ \mathrm{s}.
@@ -534,32 +534,35 @@ code enumerates the finite terminal distribution to obtain the population
 coefficients up to floating-point precision.
 
 \paragraph{Selection and calibration.}
-The same routing weights must meet the acceptance limit $\gamma=0.80$,
-defect limit $\varepsilon=0.10$ and lateness limit $\delta=0.15$ in both
-scenarios. An accepted output that takes more than $d=180\,\mathrm{s}$
-counts towards both acceptance and lateness.
+In both scenarios, the same routing rule must accept at least 80\% of
+attempts ($\gamma=0.80$), allow material defects in at most 10\% of accepted
+outputs ($\varepsilon=0.10$) and let at most 15\% of attempts exceed
+$d=180\,\mathrm{s}$ ($\delta=0.15$). An accepted output that exceeds the
+deadline counts towards both acceptance and lateness.
 
-The full-pool optimum costs USD~0.0387983 per attempt in the worst scenario,
-where acceptance is $0.80$, defects among accepted outputs are $0.10$, and
-lateness is $0.15$. The single-call pool is infeasible at these limits.
+The full-pool optimum costs USD~0.0387983 per attempt in the adverse scenario,
+where all three constraints bind. The single-call pool is infeasible at
+these limits.
 Figure~\ref{fig:simulation-frontier} shows how the minimum cost changes as
 the defect limit varies. The routing weights in
 Figure~\ref{fig:simulation-routing} assign 30.39\% of migration tasks to
-immediate rejection. A scenario-wide service requirement permits completion
-of 67.99\% and lateness of 16.14\% for adverse-scenario migration tasks.
-In that scenario, 10.17\% of accepted routine tasks have defects. Applying
-all three service limits to each nonempty group within each scenario raises
-the population optimum by 9.22\% to USD~0.0423768 per attempt.
+immediate rejection. In the adverse scenario, the rule accepts 67.99\% of
+migration attempts and 16.14\% of migration attempts exceed the deadline.
+Among accepted routine outputs in that scenario, 10.17\% have material
+defects. Applying all three service limits to each nonempty group within
+each scenario raises the population optimum by 9.22\% to USD~0.0423768 per
+attempt.
 
 With enumerated coefficients, dominance screening reduces the LP from 55 to
-10 columns per group and recovers the full optimum to within $10^{-10}$ USD.
+10 columns per group and recovers the full optimum to within USD~$10^{-10}$
+per attempt.
 The scenario-wide solution uses five positive weights, within the bound of
 nine from Proposition~\ref{prop:reduction}. An exact reduced-cost search
 starts with the 18 single-call candidates, immediate rejection and a fixed
 serial/high/8,192 feasibility seed. Three additions bring the restricted
 pool from 20 to 23 candidates, and the fourth solve matches the full-pool
-objective within $10^{-10}$ USD. The search prices every omitted candidate
-using known coefficients. Measuring any savings in workflow evaluations
+objective within USD~$10^{-10}$ per attempt. The search prices every omitted
+candidate using known coefficients. Measuring any savings in workflow evaluations
 would require screening or ranking candidates before execution.
 
 For calibration, each of 216 uncertain group--candidate--scenario cells
@@ -569,14 +572,15 @@ counts, and the distribution gives the cost bound for that cell.
 Immediate rejection has known coefficients. With family error $\alpha=0.05$,
 the one-sided Hoeffding radius is $0.0156183$. The resulting LP gives a
 worst-scenario cost upper bound of USD~0.0468272 per attempt. Enumerating
-the selected rule gives a worst-scenario cost of USD~0.0455392,
-accepted-defect risk of $0.0824426$, minimum acceptance of $0.812269$ and
-maximum lateness of $0.137539$.
+the selected rule gives a worst-scenario cost of USD~0.0455392 per attempt.
+Across scenarios, the lowest acceptance rate is 81.2269\% of attempts.
+The highest defect rate is 8.24426\% of accepted outputs, and the highest
+lateness rate is 13.7539\% of attempts.
 
-On the same sample, paired Hoeffding gives a cost upper bound of
-USD~0.0459774 per attempt. Paired empirical Bernstein gives USD~0.0433804,
-7.36\% below the separate Hoeffding bound. Requiring service limits in each
-group raises these bounds to USD~0.0521947 for separate Hoeffding,
+On the same sample, paired Hoeffding bounds cost at USD~0.0459774 per attempt.
+Paired empirical Bernstein gives USD~0.0433804 per attempt, 7.36\% below the
+separate Hoeffding bound. Requiring service limits in each group raises
+the bounds to USD~0.0521947 per attempt for separate Hoeffding,
 USD~0.0515283 for paired Hoeffding and USD~0.0491695 for paired empirical
 Bernstein. Each method gives at least 95\% simultaneous coverage under
 its sampling assumptions. Theorem~\ref{thm:calibration} uses that coverage
@@ -615,13 +619,15 @@ under the shared outcome and usage laws.}
 \includegraphics[width=.9\linewidth]{figures/calibration-cost-risk.pdf}
 \caption{Calibration of 216 uncertain cells at family error $\alpha=0.05$.
 Panel (a) shows the conservative cost bound and exact population cost. Panel
-(b) shows the maximum accepted-defect fraction across scenarios. Each sample
-size uses one independently seeded draw and a new LP solve with its own
+(b) shows the maximum fraction of accepted outputs with material defects
+across scenarios. Each sample size uses one independently seeded draw and
+a new LP solve with its own
 coverage guarantee. The LP is infeasible at 1,000 and 3,000 trials per cell.
 The plotted rules meet population acceptance and lateness constraints.}
 \label{fig:simulation-calibration}
 \end{figure}
 
+\FloatBarrier
 \section{Deployment and scope}
 \label{sec:discussion}
 A provider-load signal can inform routing if its distribution and the
@@ -652,8 +658,8 @@ affected by load needs its own valid bound.
 In the simulation, immediate rejections bypass the queue. A 5\,s queue-delay
 bound raises the adverse-scenario lateness bound for the original optimal rule
 to 15.33\%. Reoptimising at the 15\% limit costs USD~0.0388967 per attempt.
-The cost rises to USD~0.0407027 with a
-30\,s bound, and a 50\,s bound makes the programme infeasible.
+With a 30\,s bound the cost rises to USD~0.0407027 per attempt. A 50\,s
+bound makes the programme infeasible.
 
 If the service requires acceptance by the deadline, use $A'=A(1-L)$ and
 $Y'=Y(1-L)$ and continue counting lateness per attempt. Under the original
@@ -699,16 +705,17 @@ multiplies the joint probabilities by $6/5$ and keeps the other coefficients
 fixed. Set minimum completion to $3/5$, maximum conditional defect risk to
 $1/10$ and maximum lateness to $2/25$.
 
-With the first three candidates, the minimum worst-scenario cost is $113/60$
-per attempt. The multipliers for adverse-scenario defect risk and completion
-can be taken as $275/18$ and $113/36$. With these multipliers, the fourth
-candidate has reduced cost $-47/40$. With all four candidates, the weights
+With the first three candidates, the minimum worst-scenario cost is
+USD~$113/60$ per attempt. The multipliers for adverse-scenario defect risk
+and completion can be taken as $275/18$ and $113/36$. With these multipliers,
+the fourth candidate has reduced cost USD~$-47/40$ per attempt. With all
+four candidates, the weights
 \begin{equation}
 \left(\frac2{15},0,\frac{47}{135},\frac{14}{27}\right)
 \label{eq:exact-weights}
 \end{equation}
-give cost $172/135$ per attempt at completion $3/5$, worst-scenario conditional
-defect risk $1/10$ and lateness $13/450$.
+give an expected cost of USD~$172/135$ per attempt, completion of $3/5$,
+a worst-scenario conditional defect risk of $1/10$ and lateness of $13/450$.
 
 For optimality, take $\beta=650/81$ and $\kappa=172/81$. For the four candidates,
 the values
@@ -716,9 +723,9 @@ the values
 c_j+\beta(b_{j,\mathrm{adverse}}-a_j/10)-\kappa a_j
 \label{eq:exact-slack}
 \end{equation}
-are $0,47/45,0,0$. Their nonnegativity gives the lower bound
-$c(w)\ge\kappa\gamma=172/135$ for every feasible mix, which the weights
-in~\eqref{eq:exact-weights} attain.
+are $0,47/45,0,0$. Their nonnegativity gives $c(w)\ge\kappa\gamma$ for every
+feasible mix. The weights in~\eqref{eq:exact-weights} attain this lower bound
+of USD~$172/135$ per attempt.
 
 \begingroup
 \raggedright
