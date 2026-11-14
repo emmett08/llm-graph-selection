@@ -581,6 +581,8 @@ Across scenarios, the lowest acceptance rate is 81.2269\% of attempts.
 The highest defect rate is 8.24426\% of accepted outputs, and the highest
 lateness rate is 13.7539\% of attempts.
 
+\begingroup
+\setlength{\emergencystretch}{1em}
 On the same sample, paired Hoeffding bounds the worst-scenario expected
 cost at USD~0.0459774 per attempt. Paired empirical Bernstein produces the lowest cost bound, USD~0.0433804 per attempt, 7.36\% below the separate Hoeffding bound.
 Requiring service limits in each group raises
@@ -592,6 +594,8 @@ Theorem~\ref{thm:calibration} for validity after selection. All three sets
 of bounds contain their corresponding population values in this realisation.
 Figure~\ref{fig:simulation-calibration} shows the cost and defect fraction
 among accepted outputs for the separate Hoeffding method at each sample size.
+\par
+\endgroup
 
 \begin{figure}[tbp]
 \centering
