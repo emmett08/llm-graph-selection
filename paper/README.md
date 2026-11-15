@@ -1,23 +1,23 @@
-# Selecting LLM workflow graphs and reasoning settings
+# Selecting LLM workflow configurations
 
-This package contains the manuscript revision of 15 November 2026 and the presentation plan from 13 November 2026.
+This package contains the manuscript revision of 15 November 2026, accompanied by the presentation plan from 13 November 2026.
 The manuscript is an unreviewed draft in the American Mathematical Society's article layout.
 
 [Read the compiled paper](llm-graph-selection-paper.pdf).
 
 ## Read the model
 
-`main.tex` develops the model and its proofs, then applies it to a finite simulation. It explains how call dependencies constrain execution and how the workflow chooses the next call. A proposed release-note study tests the effect of a reviewer's access to the change description.
+`main.tex` proves the model's results before applying them to a finite simulation. Its workflow specification determines the next call subject to the dependencies. A proposed release-note study tests the effect of a reviewer's access to the change description.
 `references.bib` contains the references. See `reproducibility/verified-sources.md` for the evidence locations.
-`presentation-plan.md` gives each slide's headline with its layout and presenter script. The editable presentation accompanies this package separately.
+`presentation-plan.md` specifies the presentation slide by slide, including the spoken script. The editable presentation accompanies this package separately.
 
-The simulation combines three models with three graph families. Each combination has three effort levels and two output caps, giving 54 configured workflows. Immediate rejection is the 55th candidate.
-All calls within each simulated graph share the chosen model and settings. The general formulation permits different settings at each node.
-Provider documentation supplies the admissible settings and token prices. The simulation stipulates the outcome distributions and the rules for token use and duration. Every provider uses the same execution laws, so the tariff comparison determines the selected provider.
+The simulation combines three models with three graph families. Sweeping three effort levels at each of two output caps gives 54 configured workflows. Immediate rejection is the 55th candidate.
+Every call within a simulated graph uses the chosen model under identical request settings. Node-specific settings remain possible in the general formulation.
+Provider documentation supplies admissible settings for model calls, including their token prices. The simulation stipulates complete execution laws from outcomes through token use to duration. Identical laws across providers make the selected provider depend on the tariff comparison.
 
-## Reproduce the figures and arithmetic
+## Reproduce the results
 
-From the `paper/` directory, use Python 3.12 and the pinned dependencies.
+From the `paper/` directory, use Python 3.12 with the pinned dependencies.
 
 ```sh
 python -m pip install -r reproducibility/requirements.txt
@@ -27,32 +27,39 @@ python reproducibility/refine_selection.py
 python reproducibility/fractional_check.py
 ```
 
-After dependencies are installed, the scripts run locally from the supplied simulation laws. The simulation rewrites its output CSV/JSON files and the three data figures.
-`reproducibility/README.md` maps those files and explains what each sample and cost measure includes. `reproducibility/simulation-method.md` gives all constants and conditional outcome rules.
+After dependency installation, the scripts run locally from the supplied simulation laws. Each run overwrites the generated outputs, including the three data figures.
+`reproducibility/README.md` explains each file's role in the experiment. The complete conditional rules appear in `reproducibility/simulation-method.md`, including every constant.
 
 ## Build the paper
 
-Install TeX Live or MacTeX with `latexmk` and the packages imported by `main.tex`, then run from this directory.
+Use a TeX distribution such as TeX Live, including `latexmk` with the packages imported by `main.tex`. MacTeX is suitable on macOS. Run the build from this directory.
 
 ```sh
 bash check-paper.sh
 ```
 
-The compiled paper is `build/main.pdf`. The script checks the build log for LaTeX errors and unresolved references. It rejects overfull boxes and checks the source for missing citation keys or placeholder text.
+The compiled paper is `build/main.pdf`. The build check rejects LaTeX errors, including unresolved references. Its source checks cover citation integrity. An overfull box also fails validation, as does placeholder text.
 After checking the rendered pages, copy `build/main.pdf` to `llm-graph-selection-paper.pdf` to update the version linked above.
 
-Figures 1 and 2 are editable directed graphs drawn with the TikZ `graphs` library. The manuscript includes `figures/workflow-execution.tikz.tex` and `figures/workflow-topologies.tikz.tex` at full size. Each has a separate `.caption.tex` file. The remaining figures are vector PDFs with PNG copies for reuse.
-Each new figure has a standalone vector PDF. The figure specifications identify the inputs and mark meanings. The audit and review records retain the final checks and compared layouts. Their project file paths are relative to `paper/`. Environment paths in the trace identify the original rendering setup.
+The first two figures use the TikZ `graphs` library. Their editable sources are included at full size from the following files, each with a corresponding `.caption.tex` file.
 
-## Evidence and checks
+| Figure | Source |
+| --- | --- |
+| Workflow execution | `figures/workflow-execution.tikz.tex` |
+| Workflow topologies | `figures/workflow-topologies.tikz.tex` |
 
-The finite mixture proof and the calibration bound were independently reviewed. The reduced-cost formula and approximate gap bound were also checked.
+Every figure has a standalone vector PDF. Data figures also have PNG copies for reuse.
+The figure specifications explain how the inputs determine the visual marks. Review records retain the layout checks. Project paths are relative to `paper/`, with environment paths identifying the original rendering setup.
+
+## Validation
+
+Independent review covered the finite mixture proof, extending to the calibration bound. Checks also covered the reduced-cost argument, including its approximate gap bound.
 Rational arithmetic verifies the small appendix example by matching the cost of a feasible rule to a dual lower bound.
-The simulation checks that its outcome distributions are valid and that the selected routing rules meet the constraints. It also checks agreement between full-pool optimisation and reduced-cost search using known coefficients.
+The simulation validates each outcome distribution before checking the selected rules against the service constraints. With known coefficients, the reduced-cost search must reproduce the full-pool optimum.
 
 The main calibration uses outcome counts equivalent to 4.32 million synthetic trials across 216 cells whose coefficients are treated as unknown. The baseline service requirements apply separately in both scenarios.
-Additional calculations enforce service limits within each task group. Timing analyses examine acceptance by the deadline and the effect of accumulated queue delay.
+Additional calculations enforce service limits within each task group. Timing analyses assess sensitivity to accumulated queue delay. Acceptance by the deadline receives a separate calculation.
 
 All cited sources have a retained verification entry. The nine slides from 13 November 2026 were visually reviewed.
 
-The implementation supports conclusions about this finite simulator. A production pilot must measure complete workflows on representative tasks under the intended load. That pilot should compare the selected mix with the current pipeline and a strong single-model baseline, using the same service limits.
+The implementation supports conclusions about this finite simulator. A production pilot must measure complete workflows on representative tasks under the intended load. Evaluate the selected mix against the current pipeline, supplemented by a strong single-model baseline under the same service limits.
