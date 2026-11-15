@@ -1,6 +1,8 @@
-\caption{Bold labels identify model calls. A condition beside an arrow identifies
-when that path is taken. Parallel calls can run together. In (g), the supervisor
-has selected both workers. In (h), intake hands over when specialist review is
-needed. In (i), crossing arrows carry peer messages and dashed arrows carry local
-state into the next round. A deterministic check settles the result. The
-simulation uses (a), (c) and (d). The other panels are illustrative.}
+\caption{Bold labels identify model calls. Conditions beside arrows determine
+which path execution follows. Calls on parallel paths can run concurrently.
+The supervisor in (g) has selected every worker shown.
+Intake requests specialist review through the handoff in (h).
+Crossing arrows in (i) carry peer messages into the next round, where dashed
+arrows preserve local state. The deterministic check accepts exactly when the
+results match.
+The single call in (a) provides a simulation baseline. The simulator also evaluates serial review in (c) and parallel drafts in (d).}

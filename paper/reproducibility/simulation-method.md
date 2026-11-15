@@ -1,20 +1,51 @@
 # Simulation specification
 
-This is a finite synthetic experiment. No LLM was called and no observed provider quality, speed or token usage is reported. Provider documentation supplies the legal model–effort settings and the quoted input/output prices. Every task, failure, usage and duration distribution below is stipulated. The mechanism is exactly the same for every model identity; only token prices differ. Thus any selected provider reflects these stipulated equal outcomes and the quoted prices.
+The finite experiment calculates the cost of meeting service limits under specified execution rules. It uses request settings from provider documentation and bills model calls at published token prices.
+The simulator applies the same execution rules to every provider, so the choice of provider depends on token prices. Comparing provider performance would require observations from complete workflow executions.
 
-## Candidate domain and evaluation target
+## Candidate domain
 
-The pool has 54 configured workflows and one reject action: three registered models × three graph families × three effort settings × two output caps. The registry fixes `gpt-6.1-sol`, `claude-sonnet-5-5` and `gemini-4-hydrogen`; common effort settings are `low`, `medium` and `high`, and caps are 4,096 and 8,192 generated tokens per call. Every node in a configured graph uses the same model, effort and cap. The experiment therefore exercises a restricted subspace of the mathematical model, which permits differing settings across nodes. It does not vary source-access edges or prompts.
+The pool combines three models with three graph families. Sweeping three effort settings at each of two output caps gives 54 configured workflows. Immediate rejection is the 55th candidate.
 
-The router observes group g: routine (0) or migration (1). Group labels are supplied without error or classification cost; classifier and orchestration overhead are zero. It does not observe scenario k: nominal (0) or adverse (1). Routine/migration proportions are (0.70, 0.30) in the nominal scenario and (0.40, 0.60) in the adverse scenario. The router uses the same group-specific randomisation in both scenarios.
+| Configuration dimension | Values |
+| --- | --- |
+| Model | `gpt-6.1-sol`, `claude-sonnet-5-5`, `gemini-4-hydrogen` |
+| Graph | Single call, serial review with repair, parallel drafts with a merge |
+| Effort | `low`, `medium`, `high` |
+| Generated-token cap per call | {4,096, 8,192} |
 
-For each attempt, A indicates acceptance; Y indicates an accepted defective output, so Y≤A; C is the charge in USD; T is seconds; and L=1{T>180}. Acceptance does not require completion before the deadline. Rejected attempts retain their incurred cost and duration. Immediate rejection has A=Y=C=T=L=0. The constraints are acceptance ≥0.80, defects among accepted outputs ≤0.10 and lateness among all attempts ≤0.15, separately in both scenarios. The objective is the maximum scenario expected cost per attempted task.
+Every call within a configured graph uses the same model and request settings. The general model supports settings that vary by node. A broader experiment could vary those settings and test changes to prompts or to which calls see the source evidence.
+
+The router observes task group g under the mapping `{0: routine, 1: migration}`. The simulator supplies correct labels and assigns zero cost to routing and orchestration.
+Scenario k defines operating conditions for a specified task distribution.
+
+| Scenario k | Conditions | Routine proportion | Migration proportion |
+| --- | --- | ---: | ---: |
+| 0 | Nominal | 0.70 | 0.30 |
+| 1 | Adverse | 0.40 | 0.60 |
+
+Routing depends on the observed group alone, so the same group-specific probabilities apply in every scenario.
+
+The simulator records the following outcomes for each attempt.
+
+| Symbol | Outcome |
+| --- | --- |
+| A | Acceptance indicator |
+| Y | Acceptance with a material defect, so Y≤A |
+| C | Total charge in USD |
+| T | Elapsed time in seconds |
+| L | Lateness indicator, L=1{T>180} |
+
+The acceptance rule permits late outputs. Every rejected attempt retains its measurements (C,T). Immediate rejection has A=Y=C=T=L=0.
+In each scenario, the acceptance floor is 0.80, subject to a material-defect ceiling of 0.10 among accepted outputs. At most 0.15 of all attempts may exceed the deadline. The objective minimises the highest expected cost per attempt across scenarios.
 
 ## Shared latent state
 
-Each attempt draws difficulty D with probability 0.15+0.40g+0.10k, blind spot B conditional on D with probability 0.01+0.02D+0.01k, and slow load S with probability 0.06+0.08k. S is independent of (D,B). The service multiplier is 1+0.7S. D, B and S are shared by all calls in the graph. Subsequent error and review draws are conditionally independent given these states, their parents and the graph rules. This creates dependence between parallel drafts and between repeated checks without assuming independent node-level quality unconditionally. Distinct attempted tasks are independent within each cell.
+Each attempt draws difficulty D with probability 0.15+0.40g+0.10k. Conditional on D, it draws a blind spot B with probability 0.01+0.02D+0.01k.
+The slow-load indicator S has probability 0.06+0.08k, independently of (D,B) within each scenario. It multiplies call duration by 1+0.7S.
+All calls in the graph share the state (D,B,S). Subsequent random draws are conditionally independent given this state, subject to their parent outcomes under the graph rules. Consequently, parallel drafts may share a failure cause that also affects repeated checks. Distinct attempted tasks are independent within each cell.
 
-## Synthetic usage and duration
+## Call measurements
 
 | Role | Base input tokens | Desired generated tokens at low / medium / high | Extra generated tokens if D=1 |
 |---|---:|---:|---:|
@@ -23,38 +54,101 @@ Each attempt draws difficulty D with probability 0.15+0.40g+0.10k, blind spot B 
 | Repair | 4,200 | 1,000 / 2,500 / 5,500 | 1,200 |
 | Merge | 5,000 | 700 / 1,800 / 4,200 | 1,000 |
 
-Input tokens equal the base plus 1,000D. Let the desired generated count be O and selected cap be H. The billed generated count is min(O,H). These synthetic generated counts include reasoning tokens once; they are not counts of visible answer text. A call completes if and only if O≤H. A truncated call causes rejection according to the graph control rules below. This exact cap-to-failure relation is a simulation assumption, not a claim about any provider's behaviour. All input tokens are short-context, uncached and charged at the registry's standard rate. There are no tools, cache charges, batches, tier differences or orchestration charges.
+Input tokens equal the base plus 1,000D. Let O be the desired generated-token count and H the selected cap. The billed number is min(O,H), with each reasoning or visible answer token counted once.
+The simulator defines completion by O≤H. A truncated call causes rejection under the graph rules below. This cap-to-failure relation is stipulated for the experiment.
+The billing model charges short-context, uncached input tokens at the registry's standard rate. It includes the model-call charges defined here, with zero orchestration charges.
 
-For input count I and billed generated count U, call cost is (p_in I+p_out U)/10^6 USD. Rates p_in/p_out are 2/10 for Sol and Sonnet and 1.5/7.5 for Hydrogen. Synthetic call duration is (1+0.7S)(2+0.008I+0.012U) seconds. This duration law is not derived from provider measurements. Costs add over executed calls. Durations add along serial calls; parallel draft time is their maximum, which equals either draft duration here because both drafts share their settings and latent state. No queue interaction depends on the routing mix; coefficients therefore remain fixed under mixing.
+Let (I,U) give the input-token count followed by the billed generated count. Call cost is (p_in I+p_out U)/10^6 USD.
 
-## Error and check laws
+| Model | p_in | p_out |
+| --- | ---: | ---: |
+| Sol | 2 | 10 |
+| Sonnet | 2 | 10 |
+| Hydrogen | 1.5 | 7.5 |
 
-For effort e=low/medium/high define multipliers f_e=(1,0.62,0.35) and detection bases d_e=(0.65,0.82,0.94). The draft defect probability is p=1 when B=1, and p=(0.12+0.26D+0.06k)f_e otherwise. A check flags a defective output with probability d=0.08 when B=1, and d=d_e−0.08D otherwise. It flags a correct output with probability 0.03. Check outcomes do not constitute the independent evaluation label: the simulator separately retains the latent correctness of the result, so an undetected defect contributes to Y.
+The stipulated call duration is (1+0.7S)(2+0.008I+0.012U) seconds. Total cost sums every executed call's charge. Elapsed time accumulates over sequential stages, taking the maximum draft duration within a parallel stage. In this simulator, common settings under the shared latent state give the two drafts equal durations.
+The simulator holds execution laws fixed across routing mixtures, so the coefficients remain valid as routing probabilities change.
 
-The single graph calls one draft and accepts if it completes.
+## Outcome generation
 
-The serial graph calls a draft, then review. Truncation of either rejects. If review passes, it accepts the original draft. If review flags, it calls repair and then a second review. Repair is defective with probability one when B=1 and 0.65p otherwise. A truncated repair rejects. A completed repair is accepted only if the second review passes. There is at most one repair, and the second review uses the same role/cap and check law as the first. Thus this branch is a finite acyclic graph with up to four calls.
+For effort e=low/medium/high, define f_e=(1,0.62,0.35). The corresponding detection bases are d_e=(0.65,0.82,0.94).
 
-The parallel graph calls two drafts concurrently, then merge. Either draft or merge truncation rejects. Conditional on the common state, draft defects are independent Bernoulli(p). The merge defect probability is one when B=1. Otherwise it is (0.85,0.70,0.55)_e when both drafts are defective, (0.25,0.14,0.07)_e+0.04D when one is defective, and 0.01+0.01D when neither is defective. Merge applies the same check law to its result within its single call; it accepts only on a pass. This is a stipulated combined merge-and-check node, not an extra uncharged review. All executed draft costs are charged even when the result is rejected.
+| Probability | B=1 | B=0 |
+| --- | --- | --- |
+| Draft defect, p | 1 | (0.12+0.26D+0.06k)f_e |
+| Flag given a defective output, d | 0.08 | d_e−0.08D |
+
+A check flags a correct output with probability 0.03.
+The simulator retains the result's latent defect status independently of the check verdict. An accepted output with an undetected defect therefore contributes to Y.
+
+The single graph accepts its draft upon completion.
+
+The serial graph reviews its completed draft. A flag triggers a single repair followed by a second review under the original review settings. Every truncated call causes rejection.
+Repair defect probabilities are `(1, 0.65p)` in state order `(B=1, B=0)`. The final review uses the original check law. Its clear verdict accepts the repaired draft, with a flag causing rejection.
+This is a finite acyclic graph with at most four calls. A clear initial review accepts the original draft directly.
+
+The parallel graph merges two concurrent drafts. A truncated call causes rejection. Conditional on the common state, draft defects are independent Bernoulli(p).
+The merge defect probability is one when B=1. When B=0, it depends on how many drafts are defective.
+
+| Defective drafts | Merge defect probability when B=0 |
+| --- | --- |
+| Both | (0.85,0.70,0.55)_e |
+| One | (0.25,0.14,0.07)_e+0.04D |
+| Zero | 0.01+0.01D |
+
+The merge requires its result to pass a check within the same call. The model bills the combined operation as one call. Every executed draft incurs its cost, including when the workflow rejects the result.
 
 ## Exact population calculation
 
-The script enumerates D, B, S, each draft/repair/merge correctness event and each review decision. It constructs a finite distribution of terminal rows (probability, A, Y, C, T, L). It sums those rows to obtain a=E[A], b=E[Y], c=E[C] and ℓ=E[L] for every group–candidate–scenario cell. These population coefficients are exact up to floating-point arithmetic. No Monte Carlo approximation is used for the objective frontier, exact selected mix, or evaluation of any calibrated rule. `finite-outcomes.csv` records each terminal row, including duplicate-valued rows that originate from distinct paths. `population-moments.csv` records the sums.
+For each shared state (D,B,S), enumerate every possible call outcome through to the workflow's terminal decision. The resulting finite terminal distribution has rows of the form (probability, A, Y, C, T, L).
+Probability-weighted sums give the population coefficients (a,b,c,ℓ)=(E[A],E[Y],E[C],E[L]) for every candidate within each task group in every scenario. These coefficients are exact up to floating-point arithmetic.
+At each threshold, solve the optimisation with these coefficients to obtain the population frontier. Use them again to evaluate the population outcomes of rules selected using sample bounds.
+`finite-outcomes.csv` retains identical values reached through distinct paths as separate terminal rows. Their probability-weighted summaries appear in `population-moments.csv`.
 
-The LP uses 2×55 routing variables plus its cost epigraph. It has two simplex equalities and eight scenario inequalities. For each scenario, those inequalities are c−z≤0, b−0.10a≤0, −a≤−0.80 and ℓ≤0.15. SciPy's HiGHS solver is used. The code requires the maximum inequality residual to be below 10^−8. It checks every probability distribution sums to one and that Y≤A, and checks identical outcome coefficients across providers and a 0.75 cost ratio for Hydrogen.
+The linear programme (LP) uses 2×55 routing variables, with z bounding expected cost in every scenario. Two equalities make routing probabilities sum to one within each task group.
+Each scenario contributes four inequalities.
 
-## Frozen-pool calibration
+| Requirement | Inequality |
+| --- | --- |
+| Cost upper bound | c−z≤0 |
+| Defect limit | b−0.10a≤0 |
+| Acceptance floor | −a≤−0.80 |
+| Lateness ceiling | ℓ≤0.15 |
 
-There are N=54×2×2=216 nontrivial cells. The immediate reject action is exactly known and need not be calibrated. For each remaining cell, one multinomial draw of n terminal outcomes is equivalent to n independent attempts from the enumerated population distribution. Trials are independent between cells. A simultaneous one-sided Hoeffding construction at family error α=0.05 uses r=sqrt(log(4N/α)/(2n)): lower acceptance max(0,â−r), upper joint defect min(1,b̂+r), upper lateness min(1,ℓ̂+r) and upper cost min(Cmax,ĉ+Cmax r). Cmax is the maximum possible cost in that cell's known finite execution distribution. This is an actual finite simulator bound; a deployment must establish its own bound from enforceable execution and charging limits.
+SciPy's HiGHS solver computes the solution. The code requires the maximum inequality residual to be below 10^−8.
+Every outcome distribution must be normalised subject to Y≤A. Provider checks verify the shared outcome laws, including Hydrogen's cost ratio of 0.75 relative to the remaining providers.
 
-The primary run uses n=20,000 per cell and seed 20261114. The plotted sample-size illustration uses n in {1,000,3,000,10,000,30,000,100,000}, with seed 20261113+n for each n. Each size is a separate single realisation, not a replication-averaged learning curve. The 95% statement applies to the fixed family in each calibration experiment; the five plotted experiments are not asserted to have joint 95% coverage. Neither sample size nor candidate domain is chosen after inspecting that calibration sample. Once the bounds are computed, the LP selects a rule; its exact population cost/risk are evaluated from the enumerated distribution.
+## Confidence bounds for the frozen pool
+
+The sampling procedure treats the coefficients of N=54×2×2=216 cells as unknown. The immediate-rejection coefficients are known.
+For each uncertain cell, one multinomial draw of n terminal outcomes is equivalent to n independent attempts from the enumerated population distribution. Trials are independent between cells.
+At family-wise error α=0.05, the simultaneous one-sided Hoeffding bounds use radius r=sqrt(log(4N/α)/(2n)).
+
+| Quantity | Bound |
+| --- | --- |
+| Acceptance probability | Lower bound max(0,â−r) |
+| Joint probability of acceptance with a material defect | Upper bound min(1,b̂+r) |
+| Lateness probability | Upper bound min(1,ℓ̂+r) |
+| Expected cost | Upper bound min(Cmax,ĉ+Cmax r) |
+
+Cmax is the maximum possible cost in that cell's finite execution distribution. A deployment needs enforceable limits on the charges possible during execution.
+
+The primary run uses seed 20261114 for n=20,000 per cell. The plotted sample-size illustration uses n in {1,000,3,000,10,000,30,000,100,000}, with seed 20261113+n for each n.
+Each size has one separately seeded realisation. The 95% simultaneous coverage guarantee applies to the fixed family of bounds within each experiment. A joint guarantee across sample sizes would require an error allocation covering all five experiments.
+Fix the candidate pool and sample sizes before drawing the samples. The LP then selects a routing rule using the confidence bounds. Evaluate that rule against the enumerated population coefficients to recover its service outcomes, including the defect fraction among accepted outputs.
 
 ## Known-coefficient column search
 
-The initial restricted set contains all 18 single-call candidates, immediate rejection and a fixed Hydrogen serial/high/8192 feasibility seed: 20 candidates total. The LP duals price every omitted candidate for each group using its already-known population coefficients. The most negative reduced-cost candidate is added for both groups. Search stops when all omitted reduced costs exceed −10^−10. The stopping rule reaches the full-pool optimum after adding three candidates (23 retained, four solves), verified within 10^−10 USD. Pricing inspects the full omitted pool at each iteration. This is a computational demonstration of column generation, not a reduction in the cost of acquiring LLM evaluation data and not a comparison with a learned search predictor.
+The restricted set starts with 18 single-call candidates, supplemented by immediate rejection. A Hydrogen serial-review candidate at high effort makes this pool feasible under an 8,192-token cap, giving 20 candidates.
+The LP dual solution determines the reduced cost of every omitted candidate for each group using its known population coefficients. The candidate with the most negative reduced cost is added for both groups.
+Search stops when all omitted reduced costs exceed −10^−10. After adding three candidates, the fourth solve matches the full-pool optimum within 10^−10 USD per attempt. The final pool contains 23 candidates.
+Each iteration inspects the entire omitted pool. Establishing evaluation-cost savings would require candidate selection before outcome data are collected. A learned predictor could be assessed in that experiment.
 
-The frontier solves 69 defect thresholds from 0.03 to 0.20 in increments of 0.0025 with other constraints fixed, for the whole finite pool and for single calls plus rejection. Unplotted values are infeasible; no exact feasibility threshold between grid points is inferred.
+The frontier solves 69 defect thresholds from 0.03 to 0.20 in increments of 0.0025, with the other constraints fixed. It compares the whole finite pool with the single-call pool plus rejection.
+Unplotted grid points are infeasible. Locating the feasibility threshold between adjacent points would require a finer search.
 
 ## Scope of the results
 
-The simulator demonstrates that whole-graph nonlinear behaviour, shared failure causes, conditional repair, cap failures and parallel time can feed a linear mixture selector. It also demonstrates how conservative calibration can make a finite pool infeasible at small sample sizes and raise the objective when feasible. It does not validate the numerical failure mechanism, identify a superior provider or predictor, prove optimality beyond the 55 candidates, estimate real production latency, or evaluate published advice as a search prior. Predictions and advice-based proposal policies remain proposals requiring held-out workload evaluation.
+The simulator derives outcome coefficients from complete workflows under shared conditions. These coefficients account for conditional execution through repair paths, including rejection at a token cap. Duration calculations include parallel work.
+Using conservative confidence bounds restricts the feasible set and can increase the minimum cost. A small sample can produce bounds too wide for any routing rule to meet all the constraints.
+The numerical optimum applies to these 55 candidates under the stipulated laws. Deployment conclusions require measured workflow outcomes under the intended load. A proposed search policy needs assessment on held-out workloads under an explicit evaluation budget, including when it uses provider advice through a predictor.
