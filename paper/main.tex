@@ -140,6 +140,7 @@ For each attempt, measure total cost $C\ge0$ and elapsed time $T\ge0$.
 For deadline $d>0$, set the lateness indicator to $L=\mathbf1\{T>d\}$.
 If acceptance requires an on-time output, include that condition in $A$ before collecting observations.
 
+\FloatBarrier
 Evaluate complete executions to retain the dependence between stages.
 For configuration $\theta_j$, the corresponding outcome coefficients are
 \begin{equation}
@@ -154,6 +155,37 @@ For configuration $\theta_j$, the corresponding outcome coefficients are
 Thus $0\le b_{gjk}\le a_{gjk}\le1$, $0\le\ell_{gjk}\le1$ and $c_{gjk}<\infty$.
 Total cost includes task classification and orchestration.
 A cell with $\mu_{gk}=0$ contributes zero, so any coefficients satisfying these ranges may be assigned to it.
+
+Suppose we run each configuration on ten tasks from each group in one
+operating scenario with a 180\,s deadline. A late output can still be accepted.
+We estimate the coefficients in~\eqref{eq:outcomes} by dividing each total
+by ten (Table~\ref{tab:outcome-example}). The denominator includes rejected attempts.
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Task group $g$ & Configuration $j$ &
+\shortstack{Accepted\\ $\bar a$} &
+\shortstack{Accepted with a\\ material defect $\bar b$} &
+\shortstack{Cost per attempt\\ (USD) $\bar c$} &
+\shortstack{Late\\ $\bar\ell$}\\
+\midrule
+Routine (1)   & Single call (1)       & $8/10=0.80$ & $2/10=0.20$ & $0.20/10=0.02$ & $1/10=0.10$\\
+Routine (1)   & Review and repair (2) & $9/10=0.90$ & $1/10=0.10$ & $0.50/10=0.05$ & $2/10=0.20$\\
+Migration (2) & Single call (1)       & $7/10=0.70$ & $3/10=0.30$ & $0.30/10=0.03$ & $2/10=0.20$\\
+Migration (2) & Review and repair (2) & $8/10=0.80$ & $1/10=0.10$ & $0.70/10=0.07$ & $3/10=0.30$\\
+\bottomrule
+\end{tabular}
+\caption{Illustrative outcome estimates in scenario $k=1$.}
+\label{tab:outcome-example}
+\end{table}
+
+In the first row, two of the ten attempts yield an accepted output with a
+material defect, giving $\bar b_{111}=0.20$. The defect fraction among the
+eight accepted outputs is $2/8=0.25$.
 
 \begin{assumption}[Deployment validity]\label{ass:deployment}
 Every configuration terminates almost surely and has finite expected cost.
