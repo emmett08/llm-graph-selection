@@ -279,7 +279,7 @@ def plots(frontier,weights,all_candidates,calibration_rows):
     ax.xaxis.set_major_formatter(PercentFormatter(1,decimals=0))
     ax.set_xlim(.03,.20)
     ax.set_ylim(bottom=0);ax.grid(axis='y',color='.9',lw=.5);ax.legend(frameon=False)
-    ax.text(.034,12,'No feasible mix\nbelow 5% on the grid',fontsize=10.5,color='.35')
+    ax.text(.034,12,'Full pool first feasible\nat 5% on the grid',fontsize=10.5,color='.35')
     ax.annotate('Single calls first feasible\nat 13% on the grid',xy=(.13,38.8),xytext=(.09,58),fontsize=10.5,
         arrowprops=dict(arrowstyle='-',lw=.6,color=gray),color=gray)
     save(fig,'cost-risk-frontier')
