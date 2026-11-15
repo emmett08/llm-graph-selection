@@ -104,7 +104,7 @@ Search uses the constraints that limit the mix
 
 **Visual layout**
 
-Use a two-row editable process diagram. The top row runs from “Propose graph + settings” through “Evaluate whole workflow” to “Solve selection LP”. A return arrow above the row carries “Dual values guide the next candidate”. A downward connection from the solver is labelled “Freeze candidate set”. The lower row runs right to left through “Fresh calibration”, “Select using bounds” and “Run and monitor the mix”. The footer explains that predictions rank candidates while representative executions establish outcome estimates.
+Use a two-row editable process diagram. The top row runs from “Propose graph + settings” through “Evaluate whole workflow” to “Solve selection LP”. A return arrow above the row carries “Dual values guide the next candidate”. A downward connection from the solver is labelled “Freeze candidate set”. The lower row begins with “Collect a fresh sample” on the right. Follow it with “Select using bounds” and end at “Run and monitor the mix”. The footer explains that predictions rank candidates while representative executions establish outcome estimates.
 
 **Spoken script**
 
@@ -112,7 +112,7 @@ Searching every possible graph would usually cost too much. Begin with a feasibl
 
 Those multipliers define a reduced-cost score for another graph. A predictor can estimate this score and help choose the next candidate to execute. The complete execution then supplies new evidence. Repeating this process can improve the retained candidate set. A global optimality claim needs a bound covering the entire admissible search space.
 
-After development, freeze the candidates and collect fresh calibration observations. Use simultaneous bounds when selecting the deployment weights. Once a workflow is drawn, the platform executes its graph, applies its terminal rule, and measures the result. New evidence starts a further development cycle.
+Freeze the candidate set after development. Collect a fresh sample and use it to bound the outcome means simultaneously. Those bounds determine which routing weights pass the conservative service checks. For each task, the platform draws a workflow and executes it through its terminal decision. It measures the outcome. New evidence can start another development cycle.
 
 [Sources and scope — Paper §§4–6. dantzigwolfe, https://pubsonline.informs.org/doi/abs/10.1287/opre.8.1.101. smac3, https://www.jmlr.org/papers/v23/21-0888.html. ltt, https://arxiv.org/html/2110.01052v5. The simulation’s exact pricing scans known coefficients and makes no predictor-speed claim.]
 
@@ -163,7 +163,7 @@ The completion floor applies to the whole scenario. A requirement for every task
 
 **Headline**
 
-Calibration changes which mix can be certified
+Sample size can change which mixes pass the checks
 
 **Visual layout**
 
@@ -171,11 +171,11 @@ Use a native line chart across the left two-thirds with categorical sample sizes
 
 **Spoken script**
 
-The previous optimum used exact synthetic moments. Deployment has to work with estimated coefficients. We therefore draw independent calibration trials after freezing the candidate set and place simultaneous bounds on the relevant means.
+The previous optimum used exact synthetic moments. For deployment we have to estimate those means. The simulation draws independent trials after freezing the candidate set, then uses those trials to compute simultaneous confidence bounds.
 
 The horizontal axis shows trials per candidate, task group and scenario. The vertical axis gives dollars per thousand attempts. At one thousand and three thousand trials, the conservative programme is infeasible in these draws. That result leaves the true feasible set unresolved. Larger samples tighten the bounds and allow a mixture to be selected.
 
-In the separate twenty-thousand-trial run, the cost bound is about 46 dollars and 83 cents per thousand attempts. Its true synthetic defect fraction is 8.24 per cent in the adverse scenario. The procedure’s guarantee concerns repeated calibration samples under its sampling and deployment assumptions. This one simulation draw checks the calculation without establishing empirical coverage frequency.
+In the separate twenty-thousand-trial run, the cost bound is about 46 dollars and 83 cents per thousand attempts. The selected mix has a synthetic defect fraction of 8.24 per cent in the adverse scenario. Under the stated sampling and deployment assumptions, the coverage guarantee applies across repeated draws of fresh samples. This single draw illustrates the calculation. Estimating the coverage frequency would require repeated draws.
 
 [Sources and scope — Paper §4. reproducibility/calibration-size.csv and simulation-results.json. Hoeffding radius sqrt(log(4N/α)/(2n)), N=216 non-deterministic cells and α=.05. hoeffding, https://www.cs.rpi.edu/academics/courses/spring06/random/hoefding.pdf. ltt, https://arxiv.org/html/2110.01052v5. Sample-size sensitivity uses separate seeded draws rather than a repeated-run coverage experiment.]
 
@@ -194,8 +194,8 @@ Use three equally spaced stages with numbered labels and short rules. “Define 
 
 To apply this model, begin with a service whose material defects can be assessed independently of the workflow’s own checks. Define completion in terms useful to that service, then state the deadline and task groups available before routing.
 
-Build a versioned registry and execute a manageable set of complete candidates on representative tasks. Compare them with the current pipeline and a strong single-model baseline. Fit outcome predictors on development data and test whether they generalise to withheld graphs. Freeze the retained candidates before fresh calibration, then pilot the fixed routing rule under the intended load.
+Build a versioned registry and execute a manageable set of complete workflows on representative tasks. Compare them with the current pipeline and a strong single-model baseline. Fit outcome predictors on development data and test whether they generalise to withheld graphs. Freeze the retained candidates before collecting the fresh sample used to compute the bounds. Pilot the resulting fixed routing rule under the intended load.
 
-Shared queues can change latency when routing shares change. Monitor that dependence and re-estimate the coefficients when deployment load or task characteristics move beyond the evaluated range. The finite selection problem is computable. Its usefulness in production follows from reliable outcomes and calibration that represents the service being run.
+Shared queues can change latency when routing shares change. Monitor that dependence and re-estimate the coefficients when deployment load or task characteristics move beyond the evaluated range. The linear programme solves the finite selection problem using its supplied coefficients. Using the result in production requires representative measurements at the intended load.
 
-[Sources and scope — Paper §§2, 4, 6 and Deployment and scope. The LP guarantee assumes mixture-invariant conditional moments, representative calibration and a fixed material-defect definition. openaiDeploy2026, https://developers.openai.com/api/docs/guides/deployment-checklist. Supporting paper and full reproducibility package accompany the presentation.]
+[Sources and scope — Paper §§2, 4, 6 and Deployment and scope. The confidence guarantee assumes that conditional moments are invariant to the routing mix and that the fresh sample represents the intended use. The material-defect definition is fixed. openaiDeploy2026, https://developers.openai.com/api/docs/guides/deployment-checklist. Supporting paper and full reproducibility package accompany the presentation.]
