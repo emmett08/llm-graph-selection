@@ -7,13 +7,13 @@ The manuscript is an unreviewed draft in the American Mathematical Society's art
 
 ## Read the model
 
-`main.tex` proves the model's results before applying them to a finite simulation. Its workflow specification determines the next call subject to the dependencies. A proposed release-note study tests the effect of a reviewer's access to the change description.
+`main.tex` proves the model's results before applying them to a finite simulation. The workflow graph gives the dependencies that determine which calls may run next. The paper proposes a release-note study to test how a reviewer's access to the change description affects the cost of meeting service limits.
 `references.bib` contains the references. See `reproducibility/verified-sources.md` for the evidence locations.
 `presentation-plan.md` specifies the presentation slide by slide, including the spoken script. The editable presentation accompanies this package separately.
 
 The simulation combines three models with three graph families. Sweeping three effort levels at each of two output caps gives 54 configured workflows. Immediate rejection is the 55th candidate.
-Every call within a simulated graph uses the chosen model under identical request settings. Node-specific settings remain possible in the general formulation.
-Provider documentation supplies admissible settings for model calls, including their token prices. The simulation stipulates complete execution laws from outcomes through token use to duration. Identical laws across providers make the selected provider depend on the tariff comparison.
+Every call within a simulated graph uses the same model and request settings. The general formulation lets each node have its own settings.
+Provider documentation supplies valid request settings and token prices. The simulator specifies how the calls behave and how it calculates their token use and duration. It applies those rules equally to every provider, so provider choice depends on token prices.
 
 ## Reproduce the results
 
@@ -38,7 +38,7 @@ Use a TeX distribution such as TeX Live, including `latexmk` with the packages i
 bash check-paper.sh
 ```
 
-The compiled paper is `build/main.pdf`. The build check rejects LaTeX errors, including unresolved references. Its source checks cover citation integrity. An overfull box also fails validation, as does placeholder text.
+The compiled paper is `build/main.pdf`. The build check validates citations and references. It fails on LaTeX errors or overfull boxes and checks the source for placeholder text.
 After checking the rendered pages, copy `build/main.pdf` to `llm-graph-selection-paper.pdf` to update the version linked above.
 
 The first two figures use the TikZ `graphs` library. Their editable sources are included at full size from the following files, each with a corresponding `.caption.tex` file.
@@ -53,13 +53,13 @@ The figure specifications explain how the inputs determine the visual marks. Rev
 
 ## Validation
 
-Independent review covered the finite mixture proof, extending to the calibration bound. Checks also covered the reduced-cost argument, including its approximate gap bound.
+An independent review checked the proof for finite mixtures and the confidence guarantee for the selected rule. It also checked the reduced-cost argument and its approximate optimality gap bound.
 Rational arithmetic verifies the small appendix example by matching the cost of a feasible rule to a dual lower bound.
 The simulation validates each outcome distribution before checking the selected rules against the service constraints. With known coefficients, the reduced-cost search must reproduce the full-pool optimum.
 
-The main calibration uses outcome counts equivalent to 4.32 million synthetic trials across 216 cells whose coefficients are treated as unknown. The baseline service requirements apply separately in both scenarios.
-Additional calculations enforce service limits within each task group. Timing analyses assess sensitivity to accumulated queue delay. Acceptance by the deadline receives a separate calculation.
+The main confidence bounds use outcome counts equivalent to 4.32 million synthetic trials across 216 cells whose coefficients are treated as unknown. The baseline service requirements apply to each scenario as a whole.
+Further calculations enforce the limits within each task group. The timing analyses test how queue delay changes the solution and assess the requirement that acceptance occur by the deadline.
 
 All cited sources have a retained verification entry. The nine slides from 13 November 2026 were visually reviewed.
 
-The implementation supports conclusions about this finite simulator. A production pilot must measure complete workflows on representative tasks under the intended load. Evaluate the selected mix against the current pipeline, supplemented by a strong single-model baseline under the same service limits.
+The results describe the workflows in the finite simulator. In a production pilot, measure complete executions on representative tasks under the intended load. Compare the selected mix with the current pipeline and a strong single-model baseline under the same service limits.

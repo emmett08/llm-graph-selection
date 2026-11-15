@@ -1,7 +1,7 @@
 # Reproduce the workflow-selection illustration
 
 This directory contains the finite synthetic experiment underlying the paper. Its outputs also supply the presentation figures. After dependency installation, the experiment runs locally from the supplied files.
-Provider documentation establishes model compatibility, including the unit prices used to bill calls. The experiment stipulates the complete execution laws from outcome generation through token use to duration.
+Provider documentation supplies valid request settings and token prices. The simulator defines how calls produce outcomes and how it computes token use and elapsed time.
 
 Run the following commands from this directory.
 
@@ -11,8 +11,8 @@ python simulate_workflows.py
 python verify_exact_example.py
 ```
 
-The primary calibration uses outcome counts equivalent to 20,000 independent synthetic trials for each candidate within a task group in each scenario. Immediate rejection has known outcomes, leaving 216 cells to calibrate.
-Use `--calibration-n 10000` to change the primary calibration sample size. The sample-size illustration retains its prespecified seed at each fixed size.
+The main sample contains outcome counts equivalent to 20,000 independent synthetic trials per cell. A cell represents one workflow for one task group in one scenario. The four immediate-rejection cells have known coefficients. The confidence bounds cover the other 216 cells, whose counts represent 4.32 million trials.
+Use `--calibration-n 10000` to change the number of trials per cell in the main sample. The sample-size illustration keeps the prespecified seed for each size.
 
 The recorded run used Python 3.12.14. Install the dependency versions pinned in `requirements.txt`. Each run records its versions in `simulation-results.json`.
 A typical run takes a few seconds, overwriting the generated data here before updating the plots in `../figures`. The provider registry remains an unchanged input.
@@ -27,11 +27,11 @@ Each data figure comes from a source CSV. Reuse formats include a vector PDF alo
 | `candidate-configurations.json` | Exact ordered list of 55 graph/model/effort/cap candidates |
 | `finite-outcomes.csv` | Terminal-outcome distributions indexed by cell, with probability assigned to each A/Y/C/T/L row |
 | `population-moments.csv` | Population coefficients for 220 cells, including finite cost caps |
-| `calibration-counts.csv` | Nonzero multinomial counts for the primary calibration. Join to `finite-outcomes.csv` on (group, candidate, scenario, outcome). |
+| `calibration-counts.csv` | Nonzero multinomial counts for the main sample. Join to `finite-outcomes.csv` on (group, candidate, scenario, outcome). |
 | `calibration-moments.csv` | Primary sample estimates with simultaneous one-sided bounds |
 | `frontier.csv` | Objective values at each sampled defect threshold, including explicit feasibility flags |
 | `routing-plot-data.csv` | Nonzero weights of the exact full-pool solution |
-| `calibration-size.csv` | One separately seeded calibration realisation per sample size, evaluated for population outcomes subject to feasibility |
+| `calibration-size.csv` | Population outcomes for feasible rules selected from one separately seeded draw per sample size |
 | `search-trace.csv` | Restricted-pool objective at each solve, identifying any added candidate with its reduced cost |
 | `simulation-results.json` | Numerical summary with the execution metadata needed for reproduction |
 
@@ -44,12 +44,11 @@ Raw files use zero-based indices.
 | Candidate | Position in `candidate-configurations.json`. |
 | Outcome | Row in the cell's enumerated terminal-outcome distribution. |
 
-Outcomes with identical values remain separate when they arise from different execution branches. Summing the sparse calibration counts within a cell gives the requested sample size `n`.
-The files also contain counts for the four immediate-rejection cells. Their coefficients are exactly known, so the calibration guarantee covers the other 216 cells.
+The files retain outcomes from distinct execution branches even when their values coincide. Within each cell, summing the sparse counts recovers the requested sample size `n`. The files include counts for immediate rejection, whose coefficients are known.
 
-Each terminal distribution is checked for normalisation subject to `Y≤A`. Provider-level checks verify the stipulated common execution laws, with costs proportional to tariffs.
-Optimisation checks examine constraint residuals before verifying that reduced-cost search recovers the full linear programme's (LP) optimum.
-The primary calibration also checks whether its simultaneous bounds cover the known population values. This is a check on one realised sample. Estimating a coverage rate would require repeated calibration samples.
+The scripts check that each terminal distribution sums to one and that its outcomes satisfy `Y≤A`. They verify the shared execution rules across providers and check that costs scale with tariffs.
+For optimisation, the scripts check constraint residuals and verify that reduced-cost search recovers the optimum of the full linear programme (LP).
+The scripts check whether the simultaneous bounds from the main sample contain the known population values. Estimating a coverage rate would require independent repetitions of the sampling procedure.
 
 The recorded optimum is USD 0.0387983383 per attempted task in the adverse scenario. Each service constraint binds there.
 
@@ -63,13 +62,13 @@ The single-call pool is infeasible at these requirements. These results describe
 The 80% acceptance requirement applies across each whole scenario. Within the migration group, the selected rule immediately rejects 30.39% of attempts.
 The simulator supplies correct group labels at zero infrastructure cost, including orchestration overhead.
 
-The primary calibration represents 216 × 20,000 = 4.32 million independent synthetic trials. Each point in the sample-size illustration comes from one separately seeded draw. Repeated-sampling estimates require replicated draws at each size, including when assessing coverage across sample sizes.
+Each point in the sample-size illustration comes from one separately seeded draw. Estimating coverage at a given size would require repeated draws at that size.
 `verify_exact_example.py` checks the manuscript's small rational LP example separately.
 
 ## Model refinements
 
-Run `python refine_selection.py` to reproduce the additional analyses. It reuses the finite generator with the primary calibration seed before writing `refinement-results.json`.
-Selection analyses assess dominance screening, then apply service limits within each task group. Every calibration method receives its own prespecified 95% simultaneous guarantee.
-The timing calculations examine sensitivity to accumulated queue delay. Acceptance by the deadline receives a further analysis. All calculations use the finite simulator.
+Run `python refine_selection.py` to reproduce the additional analyses. The script reuses the finite generator with the seed for the main sample and writes `refinement-results.json`.
+It checks dominance screening and solves the problem with service limits within each task group. Each method fixed before sampling has its own 95% simultaneous coverage guarantee under the corresponding assumptions.
+Separate runs use the finite simulator to test accumulated queue delay and to enforce acceptance by the deadline.
 
 Run `python fractional_check.py` to check bisection's agreement with the Charnes–Cooper LP result on the appendix's adverse scenario. Exact rational arithmetic supplies a matching lower bound at the optimum.

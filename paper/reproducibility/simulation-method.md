@@ -1,7 +1,7 @@
 # Simulation specification
 
-This finite synthetic experiment evaluates stipulated execution laws under provider-documented model settings, using published token prices for billing.
-Every provider uses identical laws over complete executions. The resulting selection depends on the tariff assigned to each provider. Measuring provider performance would require observations from complete workflow executions.
+The finite experiment calculates the cost of meeting service limits under specified execution rules. It uses request settings from provider documentation and bills model calls at published token prices.
+The simulator applies the same execution rules to every provider, so the choice of provider depends on token prices. Comparing provider performance would require observations from complete workflow executions.
 
 ## Candidate domain
 
@@ -14,9 +14,9 @@ The pool combines three models with three graph families. Sweeping three effort 
 | Effort | `low`, `medium`, `high` |
 | Generated-token cap per call | {4,096, 8,192} |
 
-Every call within a configured graph uses identical request settings on the chosen model. The experiment covers this restricted part of the mathematical model, following the dimensions in the table. A broader experiment could assess node-specific settings, extending to edits of source-access edges through to changes in prompts.
+Every call within a configured graph uses the same model and request settings. The general model supports settings that vary by node. A broader experiment could vary those settings and test changes to prompts or to which calls see the source evidence.
 
-The router observes task group g under the mapping `{0: routine, 1: migration}`. The simulator supplies correct labels at zero routing-infrastructure cost, including orchestration.
+The router observes task group g under the mapping `{0: routine, 1: migration}`. The simulator supplies correct labels and assigns zero cost to routing and orchestration.
 Scenario k defines operating conditions for a specified task distribution.
 
 | Scenario k | Conditions | Routine proportion | Migration proportion |
@@ -54,7 +54,7 @@ All calls in the graph share the state (D,B,S). Subsequent random draws are cond
 | Repair | 4,200 | 1,000 / 2,500 / 5,500 | 1,200 |
 | Merge | 5,000 | 700 / 1,800 / 4,200 | 1,000 |
 
-Input tokens equal the base plus 1,000D. The desired generated count O is subject to the selected cap H. Billing uses min(O,H), including reasoning tokens once alongside visible answer tokens.
+Input tokens equal the base plus 1,000D. Let O be the desired generated-token count and H the selected cap. The billed number is min(O,H), with each reasoning or visible answer token counted once.
 The simulator defines completion by O≤H. A truncated call causes rejection under the graph rules below. This cap-to-failure relation is stipulated for the experiment.
 The billing model charges short-context, uncached input tokens at the registry's standard rate. It includes the model-call charges defined here, with zero orchestration charges.
 
@@ -100,9 +100,9 @@ The merge requires its result to pass a check within the same call. The model bi
 
 ## Exact population calculation
 
-Enumeration covers each shared state (D,B,S), following every possible subsequent outcome through to the final review decision. The resulting finite terminal distribution has rows of the form (probability, A, Y, C, T, L).
+For each shared state (D,B,S), enumerate every possible call outcome through to the workflow's terminal decision. The resulting finite terminal distribution has rows of the form (probability, A, Y, C, T, L).
 Probability-weighted sums give the population coefficients (a,b,c,ℓ)=(E[A],E[Y],E[C],E[L]) for every candidate within each task group in every scenario. These coefficients are exact up to floating-point arithmetic.
-They determine the objective frontier through the population-optimal routing mix at each threshold. Population evaluation of each calibrated rule also uses these coefficients.
+At each threshold, solve the optimisation with these coefficients to obtain the population frontier. Use them again to evaluate the population outcomes of rules selected using sample bounds.
 `finite-outcomes.csv` retains identical values reached through distinct paths as separate terminal rows. Their probability-weighted summaries appear in `population-moments.csv`.
 
 The linear programme (LP) uses 2×55 routing variables, with z bounding expected cost in every scenario. Two equalities make routing probabilities sum to one within each task group.
@@ -118,9 +118,9 @@ Each scenario contributes four inequalities.
 SciPy's HiGHS solver computes the solution. The code requires the maximum inequality residual to be below 10^−8.
 Every outcome distribution must be normalised subject to Y≤A. Provider checks verify the shared outcome laws, including Hydrogen's cost ratio of 0.75 relative to the remaining providers.
 
-## Frozen-pool calibration
+## Confidence bounds for the frozen pool
 
-Calibration treats the coefficients of N=54×2×2=216 cells as unknown. Immediate rejection has exactly known coefficients.
+The sampling procedure treats the coefficients of N=54×2×2=216 cells as unknown. The immediate-rejection coefficients are known.
 For each uncertain cell, one multinomial draw of n terminal outcomes is equivalent to n independent attempts from the enumerated population distribution. Trials are independent between cells.
 At family-wise error α=0.05, the simultaneous one-sided Hoeffding bounds use radius r=sqrt(log(4N/α)/(2n)).
 
@@ -135,7 +135,7 @@ Cmax is the maximum possible cost in that cell's finite execution distribution. 
 
 The primary run uses seed 20261114 for n=20,000 per cell. The plotted sample-size illustration uses n in {1,000,3,000,10,000,30,000,100,000}, with seed 20261113+n for each n.
 Each size has one separately seeded realisation. The 95% simultaneous coverage guarantee applies to the fixed family of bounds within each experiment. A joint guarantee across sample sizes would require an error allocation covering all five experiments.
-Calibration starts with a fixed candidate domain under prespecified sample sizes. After computing the bounds, the LP selects a routing rule. Enumeration supplies that rule's population outcomes, including defect risk among accepted outputs.
+Fix the candidate pool and sample sizes before drawing the samples. The LP then selects a routing rule using the confidence bounds. Evaluate that rule against the enumerated population coefficients to recover its service outcomes, including the defect fraction among accepted outputs.
 
 ## Known-coefficient column search
 
@@ -150,5 +150,5 @@ Unplotted grid points are infeasible. Locating the feasibility threshold between
 ## Scope of the results
 
 The simulator derives outcome coefficients from complete workflows under shared conditions. These coefficients account for conditional execution through repair paths, including rejection at a token cap. Duration calculations include parallel work.
-Conservative calibration restricts the feasible set, potentially increasing the objective. A small sample can leave the calibrated programme infeasible.
+Using conservative confidence bounds restricts the feasible set and can increase the minimum cost. A small sample can produce bounds too wide for any routing rule to meet all the constraints.
 The numerical optimum applies to these 55 candidates under the stipulated laws. Deployment conclusions require measured workflow outcomes under the intended load. A proposed search policy needs assessment on held-out workloads under an explicit evaluation budget, including when it uses provider advice through a predictor.
