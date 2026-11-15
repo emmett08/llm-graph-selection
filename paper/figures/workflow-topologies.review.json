@@ -1,18 +1,18 @@
 {
   "schema_version": "1.0",
   "figure_id": "workflow-topologies",
-  "spec_sha256": "5df2fc7c760478e8df8486370ed8f4759692f6c09cd79c96ea7ce096749a953f",
-  "audit_sha256": "3dcd4a94a9c512ec078861a673b35edbf8ce5f7f152245a4618d9d8d0cc67470",
+  "spec_sha256": "6087cdf30ae7086fd30f8d836ead5bacc285a25e67bb2e0d07be89261b5c2e2d",
+  "audit_sha256": "7d305b16599425491c0fa82a8f97a6cf87c66f93ee01c132f07d2e7aa054a974",
   "artifacts": [
     {
       "role": "final_pdf",
       "path": "figures/workflow-topologies.pdf",
-      "sha256": "55ba913cdc65f95e178e49e9a2cc4f1a95b648512887a0a8289946e82efb5383"
+      "sha256": "e31d53651e566f23f4a94a29bc71869ce512f90e2eb687ea23b30b24ee98708e"
     },
     {
       "role": "prototype",
       "path": "figures/workflow-topologies.pdf",
-      "sha256": "55ba913cdc65f95e178e49e9a2cc4f1a95b648512887a0a8289946e82efb5383"
+      "sha256": "e31d53651e566f23f4a94a29bc71869ce512f90e2eb687ea23b30b24ee98708e"
     },
     {
       "role": "prototype",
@@ -21,54 +21,76 @@
     }
   ],
   "reviewer": {
-    "id": "Independent rendered figure reviewer",
+    "id": "Independent rendered figure reader",
     "kind": "agent",
     "independence_declared": true,
     "scope": "agent_screening"
   },
   "candidates": [
     {
-      "id": "retained",
+      "id": "nine-panels",
       "prototype": "figures/workflow-topologies.pdf",
       "observations": {
-        "reading": "The compact grid retains all six graph structures.",
-        "annotation_burden": "The caption supplies the common key. Condition labels remain beside their corresponding arrows.",
-        "reproduction": "Both rows and their labels remain legible at the physical manuscript width."
+        "reading": "Workers return their results to the supervisor. A handoff gives a specialist the working state and control. Peer messages go directly to the recipient.",
+        "annotation_burden": "Branch labels identify conditions. The caption explains the local state arrows, the handoff condition and the agreement check.",
+        "reproduction": "All three rows fit the manuscript width. The new row remains legible with distinguishable crossing messages and dashed state paths."
       }
     },
     {
-      "id": "comparison",
+      "id": "six-panels",
       "prototype": "figures/workflow-topologies-spaced-prototype.pdf",
       "observations": {
-        "reading": "The expanded grid preserves the same six directed operation graphs.",
-        "annotation_burden": "The expanded grid retains the same panel titles, call labels and branch names.",
-        "reproduction": "The added vertical separation consumes about 14 mm of page height."
+        "reading": "The six panels show linear calls, repair, fork-and-join calls and classification at the workflow entrance.",
+        "annotation_burden": "Branch labels mark alternate routes. Agent-led delegation and transfer of control have no illustrated path.",
+        "reproduction": "The two-row figure uses less space. Its gaps support the existing labels."
       }
     }
   ],
-  "selected_candidate": "retained",
+  "selected_candidate": "nine-panels",
   "initial_reconstruction": {
-    "claim": "Six directed graphs show the difference between single and serial calls, a gated repair, parallel drafts and parallel reviews, and conditional specialist routing.",
+    "claim": "The final row shows three distinct ways to control work beyond the execution arrangements in the existing six panels.",
     "quantities": [
-      "There are six distinct panels and no measured quantities."
+      "The nine panels depict nine arrangements. The peer example is unrolled over two rounds."
     ],
-    "evidence_status": "Panels (a), (c) and (d) show main paths of simulated workflow families. Panels (b), (e) and (f) are illustrative.",
-    "scope": "An explicit branch label selects one path. The parallel cases feed both outputs downstream. Result denotes terminal handling.",
+    "evidence_status": "Panels (a), (c) and (d) depict simulated workflow structures. The other six are illustrative.",
+    "scope": "The supervisor resumes execution after both responses in the trace shown. The intake agent can hand over control to a specialist. The peer example has a shared terminal agreement check.",
     "unintended_inferences": [
-      "Parallel paths do not establish speed-up. The common Result node in (c) does not guarantee acceptance."
+      "Shared terminal handling can be mistaken for a central coordinator. The figure conveys architecture and contains no comparative measurements."
     ]
   },
   "comparison": {
     "matches": [
-      "The three simulated families are identified correctly without implying that all six appear in the reported evaluation.",
-      "The branch and join structures are recoverable without colour."
+      "The caption identifies the three simulated arrangements.",
+      "Worker return and direct peer transfer remain legible without colour."
     ],
-    "findings": [],
+    "findings": [
+      {
+        "id": "handoff-condition",
+        "severity": "minor",
+        "description": "The handoff arrow names its payload and leaves the decision implicit.",
+        "disposition": "resolved",
+        "reason": "The caption states when the intake agent hands over."
+      },
+      {
+        "id": "terminal-agreement",
+        "severity": "minor",
+        "description": "The converging arrows can suggest a central adjudicator.",
+        "disposition": "resolved",
+        "reason": "The caption identifies a deterministic check. The text defines agreement as the acceptance condition after two rounds."
+      },
+      {
+        "id": "initial-routing",
+        "severity": "minor",
+        "description": "The initial prose described panel (f) as a selection among specialists.",
+        "disposition": "resolved",
+        "reason": "The revised prose identifies the generalist and specialist routes."
+      }
+    ],
     "audit_warning_dispositions": [
       {
         "index": 0,
         "disposition": "accepted",
-        "reason": "The figure uses TeX vector drawing and requires no shell-generated asset."
+        "reason": "TikZ produces the vector figure directly with shell escape disabled."
       }
     ]
   },

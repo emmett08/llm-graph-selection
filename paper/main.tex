@@ -57,7 +57,9 @@ A proposed release-note study tests how the reviewer's access to source evidence
 \maketitle
 
 \section{The engineering decision}
-When drafting release notes with an LLM, a team can increase the model's reasoning effort. It can add a reviewer to check for instructions missing from the draft. The check can use the original change description.
+Release notes let us test whether giving a reviewer access to change evidence affects what gets published. For users preparing an upgrade, the change records can identify a required migration step. An assessor can check whether the draft includes it. Stakeholders need different information from the same release, so the study fixes the intended readers before judging omissions~\cite{releaseNotesPractice2022}. ReleaseEval links published notes to the underlying software changes and supplies candidate tasks for the study~\cite{releaseeval2026}.
+
+A team can increase the drafting model's reasoning effort. It can also add a reviewer with access to the original change description. Section~\ref{sec:discussion} proposes giving both review variants the same draft and changing the information available at the first review.
 
 At the expected load, estimate acceptance and lateness rates over all attempts.
 Compute mean cost over the same attempts.
@@ -120,7 +122,7 @@ A fixed graph with guarded edges can represent a controller that chooses among a
 \label{fig:graph}
 \end{figure}
 
-Figure~\ref{fig:topologies} shows six arrangements of calls connected by data or control dependencies.
+Figure~\ref{fig:topologies} shows nine arrangements. The first two rows cover a single-call baseline and familiar call sequences. The last row shows how agents can delegate work, transfer control or exchange evidence directly.
 
 \begin{figure}[htbp]
 \centering
@@ -128,6 +130,10 @@ Figure~\ref{fig:topologies} shows six arrangements of calls connected by data or
 \input{figures/workflow-topologies.caption.tex}
 \label{fig:topologies}
 \end{figure}
+
+The arrows show which operations a call depends on. The edge guards and execution rule specify who chooses the next call. In panel (f), a classification rule chooses between a generalist route and a specialist route at the start. In (g), a supervisor model chooses workers during execution and combines the results they return. In (h), the intake agent hands over working state and control when it requests specialist review~\cite{runkleArchitectures2026}. In (i), each peer reads the other's message in the second round. A deterministic check accepts matching results and rejects disagreement at the round limit.
+
+A hierarchy can nest supervisor calls. A hybrid workflow can permit peer exchange within a supervised group. For communication through a shared store or event broker, specify the reads or message deliveries that can affect an operation and decide when the attempt ends~\cite{agentPatternsTopology,huangTopologies2026}. A study of trained multi-agent reinforcement learning shows that communication order and depth can affect coordination on its grid-world tasks~\cite{zhangMarlTopology2025}. Estimate the service outcomes of an LLM configuration from its complete executions.
 
 The router selects a configuration using the observed task group $g\in\{1,\ldots,n_g\}$.
 The routing rule applies in every scenario $k\in\{1,\ldots,K\}$. A scenario specifies the task distribution and operating conditions.
@@ -782,15 +788,16 @@ A weighted cost--time objective requires explicit normalising units and a prefer
 \paragraph{Proposed release-note study.}
 Sample routine changes and migrations from the intended workload.
 Retain each task's original change description and the supporting records available before drafting.
+Fix the intended readership and target release. List the instructions required for that readership from the supporting records before assessing any draft. For tasks drawn from ReleaseEval, use the linked change evidence to establish those requirements independently of the published note.
 Fix the service limits and operating scenarios.
 Choose sample sizes for the precision needed to check those limits and detect the smallest cost difference worth measuring.
-Use these records to define material defects in the rubric. Include omissions of required migration instructions.
+Use those requirements to define material defects in the rubric.
 The workflow's release decision determines $A$.
 Assessors apply the rubric with the workflow variant and release decision concealed. An accepted note with a material defect gives $Y=1$.
 A classifier trained on release decisions estimates acceptance. Validate any omission detector against the independent defect labels.
 
 For each development task, generate one draft and run both variants of the serial review on it.
-Mask the change description in one review, following E2-Explainer's message-masking method~\cite{e2explainer2026}.
+Mask the direct change-description input to the first review in one variant, following E2-Explainer's message-masking method~\cite{e2explainer2026}. Keep any information already present in the common draft.
 Keep the roles, prompt templates, model settings and call limits fixed.
 Apply the same repair rule to both review verdicts.
 Randomise the order of the review variants within each task at comparable load.
@@ -814,6 +821,7 @@ Report acceptance and lateness as fractions of all attempts.
 Report the defect fraction among accepted notes.
 Include uncertainty for each rate and for expected cost per attempt.
 Give the same results by task group to show how each policy serves migration tasks.
+This study estimates the effect of direct reviewer access under one publication policy. To test peer coordination, sample tasks that distribute relevant evidence across agents and assess the outcomes of their exchanges.
 
 Testing $J$ workflows on $N$ tasks each with a limit of $H$ calls per attempt uses at most $NJH$ calls per scenario before independent assessment.
 Report search and assessment costs separately from deployment costs.

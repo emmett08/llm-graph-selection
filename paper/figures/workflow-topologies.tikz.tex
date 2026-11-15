@@ -3,7 +3,7 @@
 % Target width: 160 mm maximum
 % Minimum text size: 8 pt
 % Colour/greyscale intent: colour and greyscale
-% Directed edge shafts: 0.55 pt
+% Directed edge shafts: 0.75 pt
 % Dark blue bold text identifies an LLM call, redundantly with its operation name.
 % Every arrow links two operations or a workflow boundary. The panel geometry
 % describes adjacency and branching. Vertical gaps do not represent elapsed time.
@@ -13,9 +13,9 @@
   vertex/.style={font=\fontsize{8.5}{10}\selectfont,inner xsep=2pt,inner ysep=2pt,align=center},
   llm/.style={vertex,font=\fontsize{8.5}{10}\selectfont\bfseries,text=blue!45!black},
   condition/.style={font=\fontsize{8}{9}\selectfont\itshape,inner sep=1pt},
-  every edge/.style={draw=black!75,line width=.55pt,>={Stealth[length=3.8pt,width=3.2pt]}},
+  every edge/.style={draw=black!75,line width=.75pt,>={Stealth[length=4.8pt,width=3.4pt]}},
 ]
-\path[use as bounding box] (0,-96) rectangle (156,3);
+\path[use as bounding box] (0,-151) rectangle (156,3);
 
 % All panels start at the top. Each compares structure at the same physical size.
 \begin{scope}[xshift=26mm]
@@ -83,6 +83,45 @@
     ftask -> frule;
     frule ->[edge node={node[condition,left,xshift=-5.5pt] {routine}}] froutine -> fresult;
     frule ->[edge node={node[condition,right,xshift=5.5pt] {specialist}}] fspecialist -> freview -> fresult;
+  };
+\end{scope}
+
+\begin{scope}[xshift=26mm,yshift=-102mm]
+  \node[title] at (0,0) {(g) Supervisor delegation};
+  \node[llm] (gdispatch) at (0,-9) {Supervisor\\\textnormal{Selects workers}};
+  \node[llm] (gworkera) at (-14,-23) {Worker A};
+  \node[llm] (gworkerb) at (14,-23) {Worker B};
+  \node[llm] (gcollect) at (0,-35) {Supervisor\\\textnormal{Combines results}};
+  \node[vertex] (gresult) at (0,-47) {Result};
+  \graph[use existing nodes] {gdispatch -> {gworkera,gworkerb} -> gcollect -> gresult;};
+\end{scope}
+
+\begin{scope}[xshift=78mm,yshift=-102mm]
+  \node[title] at (0,0) {(h) Stateful handoff};
+  \node[llm] (hintake) at (0,-9) {Intake agent};
+  \node[llm] (hmigrate) at (-11,-27) {Migration\\specialist};
+  \node[vertex] (hresult) at (0,-47) {Result};
+  \graph[use existing nodes] {
+    hintake ->[edge node={node[condition,left,xshift=-1mm] {state + control}}] hmigrate -> hresult;
+    hintake ->[bend left=44, edge node={node[condition,right] {ready}}] hresult;
+  };
+\end{scope}
+
+\begin{scope}[xshift=130mm,yshift=-102mm]
+  \node[title] at (0,0) {(i) Bounded peer exchange};
+  \node[condition] at (0,-10) {Round 1};
+  \node[llm] (iaone) at (-15,-10) {Peer A};
+  \node[llm] (ibone) at (15,-10) {Peer B};
+  \node[condition] at (0,-29) {Round 2};
+  \node[llm] (iatwo) at (-15,-29) {Peer A};
+  \node[llm] (ibtwo) at (15,-29) {Peer B};
+  \node[vertex] (iresult) at (0,-47) {Agree or reject};
+  \graph[use existing nodes] {
+    iaone -> ibtwo;
+    ibone -> iatwo;
+    iaone ->[dashed] iatwo;
+    ibone ->[dashed] ibtwo;
+    {iatwo,ibtwo} -> iresult;
   };
 \end{scope}
 \end{tikzpicture}

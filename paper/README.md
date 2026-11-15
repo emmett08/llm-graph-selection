@@ -7,8 +7,8 @@ The manuscript uses a neutral AMS article layout. It has no target-journal forma
 
 ## Read the model
 
-`main.tex` contains the model, proofs and simulation. It also specifies a prospective release-note study to test the effect of a reviewer's access to the change description.
-`references.bib` contains 19 references checked against primary sources. See `reproducibility/verified-sources.md` for the evidence locations.
+`main.tex` contains the model, proofs and simulation. It explains the difference between call dependencies and control over the next call. It also specifies a prospective release-note study to test the effect of a reviewer's access to the change description.
+`references.bib` contains the references. See `reproducibility/verified-sources.md` for the evidence locations.
 `presentation-plan.md` contains the exact slide headlines, layouts and presenter script. The editable presentation accompanies this package separately.
 
 The simulation contains 55 candidates formed from three documented model identities, three graph families, three effort levels and two output caps, plus rejection.
