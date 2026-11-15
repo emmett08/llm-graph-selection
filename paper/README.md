@@ -1,19 +1,19 @@
 # Selecting LLM workflow graphs and reasoning settings
 
 This package contains the manuscript revision of 15 November 2026 and the presentation plan from 13 November 2026.
-The manuscript uses a neutral AMS article layout. It has no target-journal formatting or peer-review status.
+The manuscript is an unreviewed draft in the American Mathematical Society's article layout.
 
 [Read the compiled paper](llm-graph-selection-paper.pdf).
 
 ## Read the model
 
-`main.tex` contains the model, proofs and simulation. It explains the difference between call dependencies and control over the next call. It also specifies a prospective release-note study to test the effect of a reviewer's access to the change description.
+`main.tex` develops the model and its proofs, then applies it to a finite simulation. It explains how call dependencies constrain execution and how the workflow chooses the next call. A proposed release-note study tests the effect of a reviewer's access to the change description.
 `references.bib` contains the references. See `reproducibility/verified-sources.md` for the evidence locations.
-`presentation-plan.md` contains the exact slide headlines, layouts and presenter script. The editable presentation accompanies this package separately.
+`presentation-plan.md` gives each slide's headline with its layout and presenter script. The editable presentation accompanies this package separately.
 
-The simulation contains 55 candidates formed from three documented model identities, three graph families, three effort levels and two output caps, plus rejection.
-All nodes within each simulated graph share the chosen model and settings. The general formulation permits different settings at each node.
-Only the configuration domains and token prices come from provider documentation. The task outcomes, token counts and durations are stipulated. Provider response laws are equal, so the selected provider follows the tariff comparison by construction.
+The simulation combines three models with three graph families. Each combination has three effort levels and two output caps, giving 54 configured workflows. Immediate rejection is the 55th candidate.
+All calls within each simulated graph share the chosen model and settings. The general formulation permits different settings at each node.
+Provider documentation supplies the admissible settings and token prices. The simulation stipulates the outcome distributions and the rules for token use and duration. Every provider uses the same execution laws, so the tariff comparison determines the selected provider.
 
 ## Reproduce the figures and arithmetic
 
@@ -27,7 +27,8 @@ python reproducibility/refine_selection.py
 python reproducibility/fractional_check.py
 ```
 
-The scripts need no API key or network access after dependencies are installed. The simulation rewrites its output CSV/JSON files and the three data figures. `reproducibility/README.md` maps those files and explains the sampling and cost boundaries. `reproducibility/simulation-method.md` gives all constants and conditional outcome rules.
+After dependencies are installed, the scripts run locally from the supplied simulation laws. The simulation rewrites its output CSV/JSON files and the three data figures.
+`reproducibility/README.md` maps those files and explains what each sample and cost measure includes. `reproducibility/simulation-method.md` gives all constants and conditional outcome rules.
 
 ## Build the paper
 
@@ -37,16 +38,20 @@ Install TeX Live or MacTeX with `latexmk` and the packages imported by `main.tex
 bash check-paper.sh
 ```
 
-The compiled paper is `build/main.pdf`. The script fails on a LaTeX error, unresolved citation or reference, or an overfull box. It also checks citation keys and placeholder text.
+The compiled paper is `build/main.pdf`. The script checks the build log for LaTeX errors and unresolved references. It rejects overfull boxes and checks the source for missing citation keys or placeholder text.
+After checking the rendered pages, copy `build/main.pdf` to `llm-graph-selection-paper.pdf` to update the version linked above.
 
 Figures 1 and 2 are editable directed graphs drawn with the TikZ `graphs` library. The manuscript includes `figures/workflow-execution.tikz.tex` and `figures/workflow-topologies.tikz.tex` at full size. Each has a separate `.caption.tex` file. The remaining figures are vector PDFs with PNG copies for reuse.
 Each new figure has a standalone vector PDF. The figure specifications identify the inputs and mark meanings. The audit and review records retain the final checks and compared layouts. Their project file paths are relative to `paper/`. Environment paths in the trace identify the original rendering setup.
 
 ## Evidence and checks
 
-The finite mixture proof and the calibration bound were independently reviewed. The reduced-cost formula and approximate gap bound were also checked. Rational arithmetic verifies the small appendix example, including a matching dual bound. The simulation checks probability totals, accepted-defect bounds, routing feasibility and equality between full-pool selection and exact pricing search.
+The finite mixture proof and the calibration bound were independently reviewed. The reduced-cost formula and approximate gap bound were also checked.
+Rational arithmetic verifies the small appendix example by matching the cost of a feasible rule to a dual lower bound.
+The simulation checks that its outcome distributions are valid and that the selected routing rules meet the constraints. It also checks agreement between full-pool optimisation and reduced-cost search using known coefficients.
 
-The main calibration uses 4.32 million synthetic trials across 216 uncertain cells. The baseline service requirements apply separately in both scenarios. The revision also solves for per-group service and evaluates timely completion and accumulated queue delay.
+The main calibration uses outcome counts equivalent to 4.32 million synthetic trials across 216 cells whose coefficients are treated as unknown. The baseline service requirements apply separately in both scenarios.
+Additional calculations enforce service limits within each task group. Timing analyses examine acceptance by the deadline and the effect of accumulated queue delay.
 
 All cited sources have a retained verification entry. The nine slides from 13 November 2026 were visually reviewed.
 

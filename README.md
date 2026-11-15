@@ -2,7 +2,8 @@
 
 A Rust library and command-line tool implementing Emmett Miller's [*Selecting LLM workflow graphs and reasoning settings under service constraints*](paper/llm-graph-selection-paper.pdf), revised 15 November 2026.
 
-The policy assigns probabilities to complete workflows for each task group. It uses the same probabilities in every scenario. At a fixed defect limit the optimiser minimises worst-scenario mean cost per attempt. It also supports the fixed-budget problem, which minimises worst-case accepted-output defect risk.
+For each task group, the optimiser chooses the probability of selecting each complete workflow. It uses the same routing probabilities in every operating scenario.
+At a fixed defect limit, it minimises the highest mean cost per attempt across scenarios while meeting the service requirements. With a fixed budget, it instead minimises the highest fraction of accepted outputs that contain a material defect.
 
 ## Repository layout
 
@@ -18,7 +19,7 @@ See [the paper build and reproduction instructions](paper/README.md).
 
 ## Run locally
 
-Use Rust 1.85 or later. The crate has zero external dependencies and builds offline once Rust is installed.
+Use Rust 1.85 or later. The crate uses only the Rust standard library and builds offline once Rust is installed.
 
 ```sh
 cargo test --offline
@@ -26,7 +27,8 @@ cargo run --offline -- --help
 cargo run --offline -- cost fixtures/population-moments.csv fixtures/scenario-weights.csv --prune
 ```
 
-The last command should report `worst_cost=0.038798338325` (USD per attempt) and 20 candidate-group columns. The results include service by scenario and by group, and the nonzero routing weights.
+The last command should report `worst_cost=0.038798338325` (USD per attempt). Dominance screening leaves ten routing variables per task group, giving 20 in total.
+The output shows the nonzero routing probabilities alongside the service outcomes for each scenario and task group.
 
 ```sh
 # Apply all service limits to each nonempty group in each scenario.
@@ -49,7 +51,9 @@ cargo run --offline -- risk-one-lp fixtures/appendix-adverse-moments.csv fixture
   --budget 1.3 --completion 0.6 --lateness 0.08
 ```
 
-Install the CLI onto your Cargo binary path with `cargo install --path . --locked --offline`. Use `risk` for multiple scenarios. Use `price` with a feasible `--seed` of comma-separated candidate IDs to price the remaining supplied pool. The reported gap concerns that pool and its fixed coefficients. CLI exit code 2 indicates infeasibility of the supplied programme. Input and numerical errors return exit code 1.
+Install the command-line interface (CLI) onto your Cargo binary path with `cargo install --path . --locked --offline`.
+Use `risk` for fixed-budget optimisation across multiple scenarios. Use `price` with a feasible `--seed` of comma-separated candidate IDs to calculate reduced costs for the remaining candidates in the supplied pool. The reported optimality gap applies to that pool with its coefficients held fixed.
+Exit code 2 indicates that the supplied programme is infeasible. Input and numerical errors return exit code 1.
 
 ## Use as a library
 
@@ -90,9 +94,11 @@ fn main() -> Result<(), llm_workflow_optimiser::Error> {
 }
 ```
 
-Use `Study::new` to pass data directly. Group weights are indexed by scenario then group. The flat cell order is group, candidate, scenario, with scenario varying fastest. `graph::Workflow::freeze` resolves model-specific effort and request settings from a caller-supplied registry. Use each frozen workflow's ID as the study candidate ID. Record new measurements under a new ID when prompts, model settings or execution rules change.
+Use `Study::new` to pass data directly. Group weights are indexed by scenario, then by group. In the flat cell array, scenario varies fastest within each candidate, and candidate varies within each group.
+`graph::Workflow::freeze` resolves model-specific effort and request settings from a caller-supplied registry. Use each frozen workflow's ID as the study candidate ID. A change to a prompt or execution setting defines a new configuration, so store its measurements under a new ID.
 
-Graph validation accepts directed acyclic graphs, including bounded retries expanded into separate nodes. The calling platform supplies provider calls, guard implementations and scheduling. Obtain acceptance, accepted defects, cost and elapsed time from complete workflow executions. Pass a fresh uniform draw in `[0, 1)` and the observed group index to `Policy::select` to obtain the candidate index.
+Graph validation accepts directed acyclic graphs, including bounded retries expanded into separate nodes. The calling platform executes provider calls according to its guards and scheduling rules.
+Measure outcomes over complete workflow executions using the fields below. To route a task, pass a fresh uniform draw in `[0, 1)` and the observed group index to `Policy::select`. It returns the candidate index.
 
 ## Supply a study
 
@@ -104,12 +110,19 @@ All formats use the same scenario-weight file, with columns `scenario,group,weig
 | `calibration` | `group,scenario,candidate,attempts,accepted,accepted_defects,late,total_cost,cost_cap`. The cap is a justified upper bound per attempt. Zero attempts with all other fields zero denotes known immediate rejection. |
 | `outcomes` | `group,scenario,candidate,probability,accepted,defective,cost_usd,duration_seconds,queued`. Each cell's terminal probabilities sum to one. Boolean fields accept `0`, `1`, `false` and `true`. Set `queued=false` when added queuing cannot apply. |
 
-The loader reads UTF-8 CSV with named columns and supports quoted fields within a line. Each distinct group, scenario and candidate combination requires a cell. Extra columns are allowed. See [fixture provenance](fixtures/README.md) for the supplied inputs.
+The loader reads UTF-8 CSV with named columns and supports quoted fields within a line. Supply a cell for every candidate in every task group and scenario. Extra columns are allowed. See [fixture provenance](fixtures/README.md) for the supplied inputs.
 
-The decision row is `joint_defect - epsilon * acceptance <= 0` with a strictly positive completion floor. With paired calibration or timely queue bounds, use `ServiceReport.risk_score` for the constraint. Its acceptance and joint-defect fields are separate bounds. Their ratio can be uninformative. With separate endpoints, a conservative ratio can exceed one. The budget search caps it at the structural bound of one. Use point moments or separate endpoints for budget search, and point moments or separate endpoints under scenario-wide service for the one-LP case.
+The defect constraint is `joint_defect - epsilon * acceptance <= 0`, with a strictly positive acceptance requirement.
+With paired calibration or timely queue bounds, use `ServiceReport.risk_score` to assess that constraint. It bounds the joint score directly. Dividing the separately bounded joint-defect and acceptance fields can give a looser result.
+With separate confidence bounds, this conservative ratio can exceed one. The budget search caps it at one because a defect probability lies in `[0, 1]`.
+Budget search accepts point estimates or separate confidence bounds. The single-LP method additionally requires scenario-wide service limits.
 
 ## Scope of the results
 
-The library implements finite-pool selection, dominance screening, reduced-cost pricing, and calibration from representative data. The optional queue envelopes require a bound valid throughout the permitted load range. For the probabilistic queue envelope, the exceedance input bounds the chance of exceeding the delay within the entire cell. Calibration requires a frozen candidate set and independent representative draws within each cell. Fix the tolerance and calibration method before a paired analysis. The data in `fixtures/` are synthetic and do not measure provider quality.
+The library selects routing probabilities from a finite candidate pool. Dominance screening removes candidates that have suitable replacements, and reduced-cost pricing identifies candidates to consider adding to a restricted pool.
+Calibration uses representative samples to bound the service outcomes of the selected rule. Freeze the candidate set before collecting independent representative draws within each cell. Fix the tolerance and calibration method before a paired analysis. The data in `fixtures/` describe a synthetic experiment.
 
-The solver uses a dense two-phase simplex implementation for reasonably scaled finite studies. Cost rows are scaled automatically. Feasibility, bisection and pricing results are floating-point results subject to solver tolerances. Solver limits and ambiguous pivots produce a numerical error. Use the lower and upper bisection endpoints as numerical brackets, with appropriate engineering margin near hard service limits.
+The optional queue bounds must hold throughout the permitted load range. For the probabilistic queue bound, the exceedance input bounds the probability that an attempt exceeds the delay cap within that cell.
+
+The solver uses a dense two-phase simplex implementation for reasonably scaled finite studies and scales cost rows automatically. Its results use floating-point arithmetic and are subject to solver tolerances. Reaching a solver limit or encountering an ambiguous pivot produces a numerical error.
+Treat the lower and upper bisection endpoints as numerical brackets. Allow an engineering margin when decisions lie near a hard service limit.
