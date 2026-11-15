@@ -1,14 +1,14 @@
 # Selecting LLM workflow graphs and reasoning settings
 
-This package contains the mathematical revision of 14 November 2026 and the presentation plan from 13 November 2026.
+This package contains the manuscript revision of 15 November 2026 and the presentation plan from 13 November 2026.
 The manuscript uses a neutral AMS article layout. It has no target-journal formatting or peer-review status.
 
 [Read the compiled paper](llm-graph-selection-paper.pdf).
 
 ## Read the model
 
-`main.tex` is the complete manuscript. It defines executable graphs with model-specific settings, derives the constrained selection programme, proves the calibration and pricing results, and reports the finite simulation.
-`references.bib` contains 17 references checked against primary sources. The evidence locations and access limits are in `reproducibility/verified-sources.md`.
+`main.tex` contains the model, proofs and simulation. It also specifies a prospective release-note study to test the effect of a reviewer's access to the change description.
+`references.bib` contains 19 references checked against primary sources. See `reproducibility/verified-sources.md` for the evidence locations.
 `presentation-plan.md` contains the exact slide headlines, layouts and presenter script. The editable presentation accompanies this package separately.
 
 The simulation contains 55 candidates formed from three documented model identities, three graph families, three effort levels and two output caps, plus rejection.

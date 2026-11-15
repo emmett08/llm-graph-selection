@@ -64,3 +64,10 @@ The 4,096/8,192 caps are study design choices inside supported limits. Provider 
 | --- | --- | --- |
 | `charnesCooper` | [Wiley article, DOI 10.1002/nav.3800090303](https://onlinelibrary.wiley.com/doi/10.1002/nav.3800090303) and [Boyd and Vandenberghe, §4.3.2](https://www.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf) | Single-denominator linear-fractional transformation. The textbook supplies the proof and conditions. |
 | `maurerPontil` | [Author paper, Theorem 4 and Corollary 5](https://arxiv.org/pdf/0907.3740) | One-sided bound for independent, identically distributed scores in a unit interval. Shifting the paired score to this interval preserves its variance. |
+
+## Sources added for the release-note study
+
+| BibTeX key | Primary evidence checked on 15 November 2026 | Use |
+| --- | --- | --- |
+| `e2explainer2026` | [Li et al., arXiv:2608.12921v2](https://arxiv.org/html/2608.12921v2). See Edge-Level Granger-Style Causal Attribution, Appendix A's Scope of the causal attribution and Table 7. | Masking one message estimates its contribution with the other edges available. Complete subgraph executions assess combined removals. Table 7 reports a 5.27% reduction in weighted tokens after removing 75% of active edges and retaining every agent. Its accounting excludes development interventions and explainer costs. The release-note study will measure billed execution costs and account for search separately. |
+| `metagen2026` | [Wang et al., arXiv:2601.19290v1](https://arxiv.org/html/2601.19290v1). See §3.3 and Algorithm 1 for the two update mechanisms, and §4.5, Table 4, for the ablation. | The within-task ablation disables changes to prompts and graph structure together. The proposed routing comparison holds roles and prompts fixed. MetaGen also updates selection weights and a role cache across tasks. This state persists across executions and changes the assumptions required for calibration. |

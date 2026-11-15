@@ -1,6 +1,6 @@
 # LLM Workflow Optimiser
 
-A Rust library and command-line tool implementing Emmett Miller's [*Selecting LLM workflow graphs and reasoning settings under service constraints*](paper/llm-graph-selection-paper.pdf), mathematical revision of 14 November 2026.
+A Rust library and command-line tool implementing Emmett Miller's [*Selecting LLM workflow graphs and reasoning settings under service constraints*](paper/llm-graph-selection-paper.pdf), revised 15 November 2026.
 
 The policy assigns probabilities to complete workflows for each task group. It uses the same probabilities in every scenario. At a fixed defect limit the optimiser minimises worst-scenario mean cost per attempt. It also supports the fixed-budget problem, which minimises worst-case accepted-output defect risk.
 
