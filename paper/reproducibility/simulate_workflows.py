@@ -187,11 +187,11 @@ def solve(moments,allowed=None,epsilon=EPSILON,gamma=GAMMA,delta=DELTA):
     return result
 
 
-def metrics(weights,moments):
+def metrics(weights,moments,*,proportions=MU,scenarios=SCENARIOS):
     rows=[]
-    for k in range(2):
-        a,b,c,l=np.einsum('g,gj,gjv->v',MU[:,k],weights,moments[:,:,k,:])
-        rows.append(dict(scenario=SCENARIOS[k],acceptance=float(a),joint_defect=float(b),risk=float(b/a) if a>0 else None,cost=float(c),late=float(l)))
+    for k, scenario in enumerate(scenarios):
+        a,b,c,l=np.einsum('g,gj,gjv->v',proportions[:,k],weights,moments[:,:,k,:])
+        rows.append(dict(scenario=scenario,acceptance=float(a),joint_defect=float(b),risk=float(b/a) if a>0 else None,cost=float(c),late=float(l)))
     return rows
 
 

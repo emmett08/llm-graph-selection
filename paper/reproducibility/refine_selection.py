@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check exact LP reductions and optional service requirements on the paper's simulator."""
+"""Check LP reductions and test the simulator's decision assumptions."""
 from __future__ import annotations
 
 import json
@@ -39,7 +39,7 @@ def prune_columns(coefficients):
     return kept
 
 
-def route(coefficients, *, per_group=False, retained=None):
+def route(coefficients, *, per_group=False, retained=None, proportions=MU):
     groups, choices, scenarios, _ = coefficients.shape
     kept = retained if retained is not None else [list(range(choices)) for _ in range(groups)]
     pairs = [(g, j) for g, indices in enumerate(kept) for j in indices]
@@ -49,14 +49,14 @@ def route(coefficients, *, per_group=False, retained=None):
 
     rows, rhs = [], []
     for k in range(scenarios):
-        mu = MU[gs, k]
+        mu = proportions[gs, k]
         rows.append(np.r_[mu * coefficients[gs, js, k, 0], -1.0])
         rhs.append(0.0)
         for h, limit in enumerate((0.0, -GAMMA, DELTA), 1):
             row = coefficients[gs, js, k, h]
             if per_group:
                 for g in range(groups):
-                    if MU[g, k] > 0:
+                    if proportions[g, k] > 0:
                         rows.append(np.r_[row * (gs == g), 0.0])
                         rhs.append(limit)
             else:
@@ -81,23 +81,34 @@ def route(coefficients, *, per_group=False, retained=None):
     return solution.fun, weights
 
 
-def group_metrics(weights, moments):
+def group_metrics(weights, moments, scenarios=SCENARIOS):
     moment = np.einsum("gj,gjkv->gkv", weights, moments)
     return [
-        dict(group=GROUPS[g], scenario=SCENARIOS[k], completion=a,
+        dict(group=GROUPS[g], scenario=scenarios[k], completion=a,
              risk=b / a if a > 0 else None, lateness=late)
         for g, rows in enumerate(moment) for k, (a, b, _, late) in enumerate(rows)
     ]
 
 
-def describe(result, true_moments):
+def describe(result, true_moments, *, proportions=MU, scenarios=SCENARIOS):
     if result is None:
         return {"feasible": False}
     objective, weights = result
-    scenario = metrics(weights, true_moments)
+    scenario = metrics(weights, true_moments, proportions=proportions, scenarios=scenarios)
     return dict(feasible=True, objective=objective, positive_weights=int((weights > CHECK_TOL).sum()),
                 true_worst_cost=max(row["cost"] for row in scenario),
-                scenarios=scenario, groups=group_metrics(weights, true_moments))
+                scenarios=scenario, groups=group_metrics(weights, true_moments, scenarios))
+
+
+def service_limit_violations(outcome):
+    violations = []
+    if outcome["acceptance"] < GAMMA - CHECK_TOL:
+        violations.append("completion")
+    if outcome["joint_defect"] - EPSILON * outcome["acceptance"] > CHECK_TOL:
+        violations.append("defect")
+    if outcome["late"] > DELTA + CHECK_TOL:
+        violations.append("lateness")
+    return violations
 
 
 def a_y_counts(distributions, sample_counts, cell_shape):
@@ -125,6 +136,80 @@ def queue_envelope(distributions, moments, reject_index, delay):
             late = outcomes[:, 4] + delay > DEADLINE
             bounded[g, j, k, 3] = outcomes[:, 0] @ late
     return bounded
+
+
+def task_mix_sensitivity(moments, baseline):
+    """Vary the adverse task shares with the conditional outcomes fixed."""
+    nominal, adverse = SCENARIOS
+    migration_shares = (0.59, MU[1, 1], 0.61)
+    cases = []
+    for share in migration_shares:
+        proportions = MU.copy()
+        proportions[:, 1] = (1 - share, share)
+        outcome = metrics(baseline[1], moments, proportions=proportions)[1]
+        cases.append(dict(migration_share=share, outcomes=outcome,
+                          violated_limits=service_limit_violations(outcome)))
+    if [case["violated_limits"] for case in cases] != [["defect"], [], ["completion", "lateness"]]:
+        raise AssertionError("Task-mix sensitivity fails to reproduce the binding limits")
+
+    endpoints = (migration_shares[0], migration_shares[-1])
+    endpoint_proportions = [(1 - share, share) for share in endpoints]
+    proportions = np.array([MU[:, 0], *endpoint_proportions]).T
+    scenarios = [nominal] + [f"{adverse}_{p:g}_migration" for p in endpoints]
+    endpoint_moments = moments[:, :, [0, 1, 1], :]
+    optimum = route(service_coefficients(endpoint_moments), proportions=proportions)
+    robust = describe(optimum, endpoint_moments, proportions=proportions, scenarios=scenarios)
+    if (not robust["feasible"] or robust["objective"] < baseline[0] - CHECK_TOL
+            or any(service_limit_violations(row) for row in robust["scenarios"])):
+        raise AssertionError("Robust task-mix solution fails to cover the interval endpoints")
+    return dict(baseline_at_adverse_task_mix=cases, robust_migration_interval=endpoints,
+                conditional_moments_fixed=True, robust=robust)
+
+
+def without_immediate_rejection(pool, moments, reject, baseline):
+    """Remove the named rejection route and identify any zero-acceptance substitutes."""
+    no_reject = [j for j in range(len(pool)) if j != reject]
+    result = route(service_coefficients(moments), retained=[no_reject] * len(GROUPS))
+    if result is None:
+        raise AssertionError("Excluding immediate rejection should leave a feasible restricted pool")
+    objective, weights = result
+    if objective < baseline[0] - CHECK_TOL or np.any(weights[:, reject] != 0):
+        raise AssertionError("Restricted pool result is inconsistent with the baseline")
+    zero_acceptance_routes = [
+        dict(task_group=GROUPS[g], configuration=pool[j].name, weight=weights[g, j],
+             acceptance_by_scenario=dict(zip(SCENARIOS, moments[g, j, :, 0])))
+        for g, j in zip(*np.nonzero(weights > CHECK_TOL))
+        if np.all(moments[g, j, :, 0] == 0)
+    ]
+    if not zero_acceptance_routes:
+        raise AssertionError("Restricted pool no longer reproduces the zero-acceptance substitute")
+    report = describe(result, moments)
+    original = metrics(baseline[1], moments)
+    outcomes = ("acceptance", "joint_defect", "late")
+    if any(not np.isclose(before[key], after[key], rtol=0, atol=CHECK_TOL)
+           for before, after in zip(original, report["scenarios"]) for key in outcomes):
+        raise AssertionError("Excluding immediate rejection changes the aggregate service outcomes")
+    return dict(reoptimised=report, zero_acceptance_routes=zero_acceptance_routes)
+
+
+def single_call_sensitivity(pool, moments, reject):
+    """Vary single-call joint defect probabilities while holding other moments fixed."""
+    single = [j for j, candidate in enumerate(pool) if candidate.topology == "single"]
+    eligible = [single + [reject]] * len(GROUPS)
+    if route(service_coefficients(moments), retained=eligible) is not None:
+        raise AssertionError("Original single-call pool should be infeasible at these limits")
+    relative_reduction = 0.25
+    adjusted = moments.copy()
+    adjusted[:, single, :, 1] *= 1 - relative_reduction
+    result = route(service_coefficients(adjusted), retained=eligible)
+    sensitivity = describe(result, adjusted)
+    if (not sensitivity["feasible"]
+            or any(service_limit_violations(row) for row in sensitivity["scenarios"])):
+        raise AssertionError("Sensitivity should make the single-call pool feasible")
+    return dict(relative_joint_defect_reduction=relative_reduction,
+                only_joint_defect_coefficient_changed=True,
+                eligible_topologies=["single", "reject"],
+                original_pool_feasible=False, reoptimised=sensitivity)
 
 
 def main():
@@ -189,13 +274,17 @@ def main():
 
     timely = timely_acceptance(distributions, moments)
     timely_baseline = describe(full, timely)
-    timely_baseline["feasible"] = all(
-        row["acceptance"] >= GAMMA - CHECK_TOL
-        and row["joint_defect"] - EPSILON * row["acceptance"] <= CHECK_TOL
-        and row["late"] <= DELTA + CHECK_TOL
-        for row in timely_baseline["scenarios"]
+    timely_baseline["feasible"] = not any(
+        service_limit_violations(row) for row in timely_baseline["scenarios"]
     )
+    timely_defect_free = {
+        row["scenario"]: row["acceptance"] - row["joint_defect"]
+        for row in timely_baseline["scenarios"]
+    }
     timely_refit = describe(route(service_coefficients(timely)), timely)
+    timely_by_group = describe(route(service_coefficients(timely), per_group=True), timely)
+    if not timely_by_group["feasible"] or timely_by_group["objective"] < timely_refit["objective"] - CHECK_TOL:
+        raise AssertionError("Stricter timely group limits should not reduce the aggregate optimum")
 
     report = dict(
         evidence="Stipulated finite simulator, seeded calibration, no provider executions",
@@ -208,7 +297,12 @@ def main():
         group_requirements=describe(route(true_coefficients, per_group=True), moments),
         calibration=analyses,
         queue_sensitivity=queue,
-        timely_completion=dict(original_route=timely_baseline, reoptimised=timely_refit),
+        timely_completion=dict(original_route=timely_baseline, reoptimised=timely_refit,
+                               original_defect_free_timely=timely_defect_free,
+                               reoptimised_by_group=timely_by_group),
+        no_immediate_rejection=without_immediate_rejection(pool, moments, reject, full),
+        task_mix_sensitivity=task_mix_sensitivity(moments, full),
+        single_call_sensitivity=single_call_sensitivity(pool, moments, reject),
     )
     output = Path(HERE) / "refinement-results.json"
     output.write_text(json.dumps(report, indent=2) + "\n")

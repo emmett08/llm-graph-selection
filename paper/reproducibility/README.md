@@ -9,6 +9,8 @@ Run the following commands from this directory.
 python -m pip install -r requirements.txt
 python simulate_workflows.py
 python verify_exact_example.py
+python refine_selection.py
+python fractional_check.py
 ```
 
 The main sample contains outcome counts equivalent to 20,000 independent synthetic trials per cell. A cell represents one workflow for one task group in one scenario. The four immediate-rejection cells have known coefficients. The confidence bounds cover the other 216 cells, whose counts represent 4.32 million trials.
@@ -34,6 +36,7 @@ Each data figure comes from a source CSV. Reuse formats include a vector PDF alo
 | `calibration-size.csv` | Population outcomes for feasible rules selected from one separately seeded draw per sample size |
 | `search-trace.csv` | Restricted-pool objective at each solve, identifying any added candidate with its reduced cost |
 | `simulation-results.json` | Numerical summary with the execution metadata needed for reproduction |
+| `refinement-results.json` | Population and calibration comparisons across service definitions and sensitivity settings |
 
 Raw files use zero-based indices.
 
@@ -58,9 +61,10 @@ The recorded optimum is USD 0.0387983383 per attempted task in the adverse scena
 | Fraction of accepted outputs with a material defect | 0.10 |
 | Fraction of attempts exceeding the deadline | 0.15 |
 
-The single-call pool is infeasible at these requirements. These results describe the specified finite simulator.
-The 80% acceptance requirement applies across each whole scenario. Within the migration group, the selected rule immediately rejects 30.39% of attempts.
-The simulator supplies correct group labels at zero infrastructure cost, including orchestration overhead.
+The single-call pool is infeasible at these requirements under the specified response laws.
+The 80% acceptance requirement applies across each whole scenario, with every original attempt in the denominator. Within the migration group, the selected rule immediately rejects 30.39% of attempts.
+The baseline includes late outputs in acceptance. The joint on-time and defect-free outcome counts attempts that result in an accepted output by the deadline without a material defect. Its denominator also includes all attempts.
+The simulator supplies the true group to the router and assigns zero infrastructure cost to routing and orchestration. In an operational study, a classifier supplies the observed routing group. Independent task labels are needed to assess service for the true groups.
 
 Each point in the sample-size illustration comes from one separately seeded draw. Estimating coverage at a given size would require repeated draws at that size.
 `verify_exact_example.py` checks the manuscript's small rational LP example separately.
@@ -68,7 +72,7 @@ Each point in the sample-size illustration comes from one separately seeded draw
 ## Model refinements
 
 Run `python refine_selection.py` to reproduce the additional analyses. The script reuses the finite generator with the seed for the main sample and writes `refinement-results.json`.
-It checks dominance screening and solves the problem with service limits within each task group. Each method fixed before sampling has its own 95% simultaneous coverage guarantee under the corresponding assumptions.
-Separate runs use the finite simulator to test accumulated queue delay and to enforce acceptance by the deadline.
+It checks dominance screening and compares service limits applied across each scenario with limits applied within each task group. Each calibration method fixed before sampling has its own 95% simultaneous coverage guarantee under the corresponding assumptions.
+The population sensitivity analyses remove the immediate-rejection option, require acceptance by the deadline, add queue delay and vary the adverse migration share over 59–61% using fixed group coefficients. Another calculation reduces the single-call joint defective-acceptance coefficient by 25% in every cell, leaving the other coefficients at their original values. This perturbation tests how the one-call result depends on its stipulated defect rate.
 
 Run `python fractional_check.py` to check bisection's agreement with the Charnes–Cooper LP result on the appendix's adverse scenario. Exact rational arithmetic supplies a matching lower bound at the optimum.

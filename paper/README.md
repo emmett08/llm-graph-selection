@@ -1,6 +1,6 @@
 # Selecting LLM workflow configurations
 
-This package contains the manuscript revision of 15 November 2026, accompanied by the presentation plan from 13 November 2026.
+This package contains the manuscript revision of 16 November 2026, accompanied by the presentation plan from 13 November 2026.
 The manuscript is an unreviewed draft in the American Mathematical Society's article layout.
 
 [Read the compiled paper](llm-graph-selection-paper.pdf).
@@ -15,6 +15,8 @@ The simulation combines three models with three graph families. Sweeping three e
 Every call within a simulated graph uses the same model and request settings. The general formulation lets each node have its own settings.
 Provider documentation supplies valid request settings and token prices. The simulator specifies how the calls behave and how it calculates their token use and duration. It applies those rules equally to every provider, so provider choice depends on token prices.
 
+The main example minimises cost per original attempt under service limits that apply across each scenario. Rejected attempts stay in the denominator, and late outputs can still count as accepted. An on-time accepted result and an on-time accepted result free of material defects are separate outcomes. In the simulator, the router receives the true task group. An operational evaluation can route on the classifier's observed group and assess service outcomes using independently labelled true groups.
+
 ## Reproduce the results
 
 From the `paper/` directory, use Python 3.12 with the pinned dependencies.
@@ -27,7 +29,7 @@ python reproducibility/refine_selection.py
 python reproducibility/fractional_check.py
 ```
 
-After dependency installation, the scripts run locally from the supplied simulation laws. Each run overwrites the generated outputs, including the three data figures.
+After dependency installation, the scripts run locally from the supplied simulation laws. The simulator overwrites its generated outputs, including the three data figures. The sensitivity analyses and exact checks have separate outputs.
 `reproducibility/README.md` explains each file's role in the experiment. The complete conditional rules appear in `reproducibility/simulation-method.md`, including every constant.
 
 ## Build the paper
@@ -57,9 +59,9 @@ An independent review checked the proof for finite mixtures and the confidence g
 Rational arithmetic verifies the small appendix example by matching the cost of a feasible rule to a dual lower bound.
 The simulation validates each outcome distribution before checking the selected rules against the service constraints. With known coefficients, the reduced-cost search must reproduce the full-pool optimum.
 
-The main confidence bounds use outcome counts equivalent to 4.32 million synthetic trials across 216 cells whose coefficients are treated as unknown. The baseline service requirements apply to each scenario as a whole.
-Further calculations enforce the limits within each task group. The timing analyses test how queue delay changes the solution and assess the requirement that acceptance occur by the deadline.
+The main confidence bounds use outcome counts equivalent to 4.32 million synthetic trials across 216 cells whose coefficients are treated as unknown.
+Sensitivity analyses change the stipulated single-call defect rates, exclude immediate rejection, vary the adverse migration share between 59% and 61%, and apply service limits within each group or require acceptance by the deadline. The timing analyses also test changes in queue delay. Each reported numerical result retains the assumptions of its corresponding simulation.
 
 All cited sources have a retained verification entry. The nine slides from 13 November 2026 were visually reviewed.
 
-The results describe the workflows in the finite simulator. In a production pilot, measure complete executions on representative tasks under the intended load. Compare the selected mix with the current pipeline and a strong single-model baseline under the same service limits.
+The results describe the workflows in the finite simulator. A production pilot would compare complete workflows on representative tasks under the intended load, using the same service limits for the selected mix, the current pipeline and a tuned single-call baseline. Where the routing mix affects outcomes through shared capacity, evaluate complete policies at the intended load.

@@ -16,7 +16,7 @@ The pool combines three models with three graph families. Sweeping three effort 
 
 Every call within a configured graph uses the same model and request settings. The general model supports settings that vary by node. A broader experiment could vary those settings and test changes to prompts or to which calls see the source evidence.
 
-The router observes task group g under the mapping `{0: routine, 1: migration}`. The simulator supplies correct labels and assigns zero cost to routing and orchestration.
+The router observes task group g under the mapping `{0: routine, 1: migration}`. The simulator makes the observed label equal to the true task group and assigns zero cost to routing and orchestration. In a deployment, the classifier can supply a different observed group. Evaluating service within true groups then requires independently labelled tasks and outcome estimates for the joint combinations of observed and true group.
 Scenario k defines operating conditions for a specified task distribution.
 
 | Scenario k | Conditions | Routine proportion | Migration proportion |
@@ -36,8 +36,10 @@ The simulator records the following outcomes for each attempt.
 | T | Elapsed time in seconds |
 | L | Lateness indicator, L=1{T>180} |
 
-The acceptance rule permits late outputs. Every rejected attempt retains its measurements (C,T). Immediate rejection has A=Y=C=T=L=0.
-In each scenario, the acceptance floor is 0.80, subject to a material-defect ceiling of 0.10 among accepted outputs. At most 0.15 of all attempts may exceed the deadline. The objective minimises the highest expected cost per attempt across scenarios.
+The baseline acceptance rule permits late outputs, which have A=L=1. Every rejected attempt retains its measurements (C,T). Immediate rejection has A=Y=C=T=L=0.
+In each scenario, the acceptance floor is 0.80, subject to a material-defect ceiling of 0.10 among accepted outputs. At most 0.15 of all attempts may exceed the deadline. The objective minimises the highest expected cost per original attempt across scenarios. Acceptance, lateness and mean cost use every original attempt in their denominators.
+
+When acceptance has to occur by the deadline, use A′=A(1−L) and Y′=Y(1−L). This changes which outcomes count towards the acceptance floor and which accepted outputs enter the defect calculation. The joint on-time and defect-free rate averages (A−Y)(1−L) over all attempts. It measures whether the attempt delivered an accepted result by the deadline without a material defect.
 
 ## Shared latent state
 
@@ -146,6 +148,17 @@ Each iteration inspects the entire omitted pool. Establishing evaluation-cost sa
 
 The frontier solves 69 defect thresholds from 0.03 to 0.20 in increments of 0.0025, with the other constraints fixed. It compares the whole finite pool with the single-call pool plus rejection.
 Unplotted grid points are infeasible. Locating the feasibility threshold between adjacent points would require a finer search.
+
+## Sensitivity analyses
+
+`refine_selection.py` reruns the population calculations with changes to the candidate pool, scenario weights or service requirements.
+
+| Change | Inputs used in the comparison |
+| --- | --- |
+| Lower single-call defect rates | Multiply the joint defective-acceptance coefficient by 0.75 in every single-call cell. Keep acceptance, cost, lateness and all multicall coefficients fixed. |
+| Remove immediate rejection | Exclude the zero-outcome candidate. Other workflows retain their original acceptance and rejection rules. |
+| Shift the adverse task mix | Vary the adverse migration share between 0.59 and 0.61 with complementary routine shares and fixed per-group outcome coefficients. Keep the nominal scenario as specified above. |
+| Change the service scope | Apply the service limits within each represented task group, require acceptance by the deadline, or combine those requirements. Calculate on-time outcomes from the joint terminal distributions. |
 
 ## Scope of the results
 

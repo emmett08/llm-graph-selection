@@ -829,6 +829,320 @@
           "lateness": 0.11471209206379589
         }
       ]
+    },
+    "original_defect_free_timely": {
+      "nominal": 0.7702210043323114,
+      "adverse": 0.5982428078664314
+    },
+    "reoptimised_by_group": {
+      "feasible": true,
+      "objective": 0.05176548709300969,
+      "positive_weights": 7,
+      "true_worst_cost": 0.05176548709300968,
+      "scenarios": [
+        {
+          "scenario": "nominal",
+          "acceptance": 0.8580392692007357,
+          "joint_defect": 0.05375048269230993,
+          "risk": 0.06264338314303323,
+          "cost": 0.03962505173197517,
+          "late": 0.07504701109774976
+        },
+        {
+          "scenario": "adverse",
+          "acceptance": 0.8,
+          "joint_defect": 0.08000000000000002,
+          "risk": 0.10000000000000002,
+          "cost": 0.05176548709300968,
+          "late": 0.13926472730177322
+        }
+      ],
+      "groups": [
+        {
+          "group": "routine",
+          "scenario": "nominal",
+          "completion": 0.855835135902431,
+          "risk": 0.05968869567930629,
+          "lateness": 0.06879859390535463
+        },
+        {
+          "group": "routine",
+          "scenario": "adverse",
+          "completion": 0.8,
+          "risk": 0.10000000000000002,
+          "lateness": 0.12316181825443306
+        },
+        {
+          "group": "migration",
+          "scenario": "nominal",
+          "completion": 0.8631822468967798,
+          "risk": 0.06947897222560642,
+          "lateness": 0.08962665121333842
+        },
+        {
+          "group": "migration",
+          "scenario": "adverse",
+          "completion": 0.8,
+          "risk": 0.10000000000000002,
+          "lateness": 0.15
+        }
+      ]
+    }
+  },
+  "no_immediate_rejection": {
+    "reoptimised": {
+      "feasible": true,
+      "objective": 0.04517849338971769,
+      "positive_weights": 5,
+      "true_worst_cost": 0.04517849338971769,
+      "scenarios": [
+        {
+          "scenario": "nominal",
+          "acceptance": 0.8977369711984535,
+          "joint_defect": 0.056040133105071346,
+          "risk": 0.06242377767984686,
+          "cost": 0.03760514383663201,
+          "late": 0.08505552494309138
+        },
+        {
+          "scenario": "adverse",
+          "acceptance": 0.8000000000000002,
+          "joint_defect": 0.08000000000000003,
+          "risk": 0.10000000000000002,
+          "cost": 0.04517849338971769,
+          "late": 0.15
+        }
+      ],
+      "groups": [
+        {
+          "group": "routine",
+          "scenario": "nominal",
+          "completion": 0.9888840698051975,
+          "risk": 0.06041016572030684,
+          "lateness": 0.07436422042085161
+        },
+        {
+          "group": "routine",
+          "scenario": "adverse",
+          "completion": 0.980109741902802,
+          "risk": 0.10166552238415766,
+          "lateness": 0.1329341150463824
+        },
+        {
+          "group": "migration",
+          "scenario": "nominal",
+          "completion": 0.6850604077827172,
+          "risk": 0.06920595404880026,
+          "lateness": 0.11000190216165084
+        },
+        {
+          "group": "migration",
+          "scenario": "adverse",
+          "completion": 0.6799268387314655,
+          "risk": 0.09839944082109811,
+          "lateness": 0.16137725663574506
+        }
+      ]
+    },
+    "zero_acceptance_routes": [
+      {
+        "task_group": "migration",
+        "configuration": "gemini-4-hydrogen__single__high__4096",
+        "weight": 0.30386031646533496,
+        "acceptance_by_scenario": {
+          "nominal": 0.0,
+          "adverse": 0.0
+        }
+      }
+    ]
+  },
+  "task_mix_sensitivity": {
+    "baseline_at_adverse_task_mix": [
+      {
+        "migration_share": 0.59,
+        "outcomes": {
+          "scenario": "adverse",
+          "acceptance": 0.8030018290317136,
+          "joint_defect": 0.08032738948173919,
+          "risk": 0.10003388109165409,
+          "cost": 0.03876664190817235,
+          "late": 0.14971556858410637
+        },
+        "violated_limits": [
+          "defect"
+        ]
+      },
+      {
+        "migration_share": 0.6,
+        "outcomes": {
+          "scenario": "adverse",
+          "acceptance": 0.8000000000000002,
+          "joint_defect": 0.08000000000000003,
+          "risk": 0.10000000000000002,
+          "cost": 0.03879833832489505,
+          "late": 0.15
+        },
+        "violated_limits": []
+      },
+      {
+        "migration_share": 0.61,
+        "outcomes": {
+          "scenario": "adverse",
+          "acceptance": 0.7969981709682867,
+          "joint_defect": 0.07967261051826086,
+          "risk": 0.09996586368757313,
+          "cost": 0.03883003474161775,
+          "late": 0.15028443141589362
+        },
+        "violated_limits": [
+          "completion",
+          "lateness"
+        ]
+      }
+    ],
+    "robust_migration_interval": [
+      0.59,
+      0.61
+    ],
+    "conditional_moments_fixed": true,
+    "robust": {
+      "feasible": true,
+      "objective": 0.039023490189750376,
+      "positive_weights": 5,
+      "true_worst_cost": 0.039023490189750376,
+      "scenarios": [
+        {
+          "scenario": "nominal",
+          "acceptance": 0.8992162220898137,
+          "joint_defect": 0.055940683816718656,
+          "risk": 0.062210492251474646,
+          "cost": 0.03461659773524387,
+          "late": 0.08533639301185332
+        },
+        {
+          "scenario": "adverse_0.59_migration",
+          "acceptance": 0.8059074250222446,
+          "joint_defect": 0.08059074250222446,
+          "risk": 0.1,
+          "cost": 0.03895983164363353,
+          "late": 0.14946187015533785
+        },
+        {
+          "scenario": "adverse_0.61_migration",
+          "acceptance": 0.8000000000000002,
+          "joint_defect": 0.0799684803908712,
+          "risk": 0.09996060048858899,
+          "cost": 0.039023490189750376,
+          "late": 0.15000000000000002
+        }
+      ],
+      "groups": [
+        {
+          "group": "routine",
+          "scenario": "nominal",
+          "completion": 0.9889186019992348,
+          "risk": 0.05996436909700025,
+          "lateness": 0.07502362593172819
+        },
+        {
+          "group": "routine",
+          "scenario": "adverse_0.59_migration",
+          "completion": 0.9801764631784564,
+          "risk": 0.10094863374527961,
+          "lateness": 0.1335870397378045
+        },
+        {
+          "group": "routine",
+          "scenario": "adverse_0.61_migration",
+          "completion": 0.9801764631784564,
+          "risk": 0.10094863374527961,
+          "lateness": 0.1335870397378045
+        },
+        {
+          "group": "migration",
+          "scenario": "nominal",
+          "completion": 0.6899106689678312,
+          "risk": 0.06972288068486833,
+          "lateness": 0.10939951619881197
+        },
+        {
+          "group": "migration",
+          "scenario": "adverse_0.59_migration",
+          "completion": 0.684805212066233,
+          "risk": 0.09905644411614363,
+          "lateness": 0.16049353197091187
+        },
+        {
+          "group": "migration",
+          "scenario": "adverse_0.61_migration",
+          "completion": 0.684805212066233,
+          "risk": 0.09905644411614363,
+          "lateness": 0.16049353197091187
+        }
+      ]
+    }
+  },
+  "single_call_sensitivity": {
+    "relative_joint_defect_reduction": 0.25,
+    "only_joint_defect_coefficient_changed": true,
+    "eligible_topologies": [
+      "single",
+      "reject"
+    ],
+    "original_pool_feasible": false,
+    "reoptimised": {
+      "feasible": true,
+      "objective": 0.03660775764606648,
+      "positive_weights": 5,
+      "true_worst_cost": 0.03660775764606648,
+      "scenarios": [
+        {
+          "scenario": "nominal",
+          "acceptance": 0.8562063663597077,
+          "joint_defect": 0.05185306660620237,
+          "risk": 0.06056141211220329,
+          "cost": 0.03660775764606648,
+          "late": 0.0
+        },
+        {
+          "scenario": "adverse",
+          "acceptance": 0.8,
+          "joint_defect": 0.08,
+          "risk": 0.09999999999999999,
+          "cost": 0.03660775764606648,
+          "late": 0.0
+        }
+      ],
+      "groups": [
+        {
+          "group": "routine",
+          "scenario": "nominal",
+          "completion": 0.9124127327194155,
+          "risk": 0.0529195739524733,
+          "lateness": 0.0
+        },
+        {
+          "group": "routine",
+          "scenario": "adverse",
+          "completion": 0.9124127327194153,
+          "risk": 0.08446985437571766,
+          "lateness": 0.0
+        },
+        {
+          "group": "migration",
+          "scenario": "nominal",
+          "completion": 0.7250581781870565,
+          "risk": 0.08299987499999999,
+          "lateness": 0.0
+        },
+        {
+          "group": "migration",
+          "scenario": "adverse",
+          "completion": 0.7250581781870565,
+          "risk": 0.11302875000000003,
+          "lateness": 0.0
+        }
+      ]
     }
   }
 }
