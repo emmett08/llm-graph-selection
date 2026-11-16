@@ -48,6 +48,24 @@ class Candidate:
     price_out: float
 
 
+@dataclass(frozen=True)
+class SerialRepair:
+    """Changes to the original non-blind repair law after a review flag."""
+
+    retention: float = 0.0
+    false_flag_harm: float = 0.0
+
+    def defect_probabilities(self, draft_defect_probability, draft_has_defect):
+        """Return disjoint probabilities of retaining or introducing a defect."""
+        new_defect = 0.65 * draft_defect_probability
+        if draft_has_defect:
+            return self.retention, (1 - self.retention) * new_defect
+        return 0.0, new_defect + (1 - new_defect) * self.false_flag_harm
+
+
+BASELINE_SERIAL_REPAIR = SerialRepair()
+
+
 def candidates(registry):
     result=[]
     for model in registry['models']:
@@ -77,7 +95,7 @@ def branch(probability):
     return [(False,1-probability),(True,probability)]
 
 
-def conditional_outcomes(candidate,difficulty,blind,scenario,slowdown):
+def conditional_outcomes(candidate, difficulty, blind, scenario, slowdown, *, serial_repair=BASELINE_SERIAL_REPAIR):
     """Enumerate P,A,Y,C,T conditional on latent task/load values."""
     if candidate.topology=='reject':
         return [(1.,0,0,0.,0.)]
@@ -101,7 +119,7 @@ def conditional_outcomes(candidate,difficulty,blind,scenario,slowdown):
             if not repair_ok:
                 outcomes.append((pdraft*flag,0,0,cd+cr+cp,td+tr+tp))
                 continue
-            repair_bad=1. if blind else .65*bad
+            repair_bad = 1.0 if blind else sum(serial_repair.defect_probabilities(bad, is_bad))
             for is_repair_bad,prep in branch(repair_bad):
                 final_reject=detect if is_repair_bad else false_alarm
                 outcomes.append((pdraft*flag*prep*(1-final_reject),1,int(is_repair_bad),cd+2*cr+cp,td+2*tr+tp))
@@ -128,7 +146,7 @@ def conditional_outcomes(candidate,difficulty,blind,scenario,slowdown):
     raise ValueError(candidate.topology)
 
 
-def distribution(candidate,group,scenario):
+def distribution(candidate, group, scenario, *, serial_repair=BASELINE_SERIAL_REPAIR):
     result=[]
     difficult=.15+.40*group+.10*scenario
     slow_probability=.06+.08*scenario
@@ -136,7 +154,11 @@ def distribution(candidate,group,scenario):
         blind_probability=.01+.02*d+.01*scenario
         for blind,pb in branch(blind_probability):
             for slow,ps in branch(slow_probability):
-                for p,a,b,c,t in conditional_outcomes(candidate,int(d),blind,scenario,1.7 if slow else 1.):
+                outcomes = conditional_outcomes(
+                    candidate, int(d), blind, scenario, 1.7 if slow else 1.,
+                    serial_repair=serial_repair,
+                )
+                for p,a,b,c,t in outcomes:
                     result.append((pd*pb*ps*p,a,b,c,t,int(t>DEADLINE)))
     table=np.array(result,dtype=float)
     assert abs(table[:,0].sum()-1)<1e-12
@@ -146,14 +168,14 @@ def distribution(candidate,group,scenario):
     return table
 
 
-def moment_table(all_candidates):
+def moment_table(all_candidates, *, serial_repair=BASELINE_SERIAL_REPAIR):
     distributions={}
     moments=np.zeros((2,len(all_candidates),2,4))
     cmax=np.zeros((2,len(all_candidates),2))
     for g in range(2):
         for j,candidate in enumerate(all_candidates):
             for k in range(2):
-                d=distribution(candidate,g,k)
+                d = distribution(candidate, g, k, serial_repair=serial_repair)
                 distributions[g,j,k]=d
                 moments[g,j,k]=d[:,0]@d[:,[1,2,3,5]]
                 cmax[g,j,k]=d[:,3].max()
@@ -187,11 +209,11 @@ def solve(moments,allowed=None,epsilon=EPSILON,gamma=GAMMA,delta=DELTA):
     return result
 
 
-def metrics(weights,moments):
+def metrics(weights,moments,*,proportions=MU,scenarios=SCENARIOS):
     rows=[]
-    for k in range(2):
-        a,b,c,l=np.einsum('g,gj,gjv->v',MU[:,k],weights,moments[:,:,k,:])
-        rows.append(dict(scenario=SCENARIOS[k],acceptance=float(a),joint_defect=float(b),risk=float(b/a) if a>0 else None,cost=float(c),late=float(l)))
+    for k, scenario in enumerate(scenarios):
+        a,b,c,l=np.einsum('g,gj,gjv->v',proportions[:,k],weights,moments[:,:,k,:])
+        rows.append(dict(scenario=scenario,acceptance=float(a),joint_defect=float(b),risk=float(b/a) if a>0 else None,cost=float(c),late=float(l)))
     return rows
 
 

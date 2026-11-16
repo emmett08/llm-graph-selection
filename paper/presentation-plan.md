@@ -8,7 +8,7 @@ The intended audience is experienced engineers. The nine-slide arc takes about t
 
 Use the supplied Global Streaming mark and the six-colour stripe. White surfaces and dark text carry the explanation. The title uses Georgia, with Times New Roman as fallback. Body text uses Arial. The 16:9 slide geometry and readable presentation sizes adapt the supplied report stylesheet. Tables describe exact published mappings. Graphs and charts remain editable where the presentation runtime permits it.
 
-The simulation uses standard uncached text-token tariffs verified on 13 November 2026. It makes no LLM API calls. Its outcome law is shared across providers, so a provider preference in its output reflects the stipulated price comparison. Keep the synthetic response law and tariff scope visible on the relevant slides.
+The simulation uses standard uncached text-token tariffs verified on 13 November 2026. It makes no LLM API calls. The simulator gives matching configurations the same outcome distributions and token counts, so the selected provider follows from the tariff differences. Keep the synthetic response law and tariff scope visible on the relevant slides.
 
 
 
@@ -70,7 +70,7 @@ The registry contains the exact model identifier and its endpoint. It then lists
 
 For this experiment we selected three documented models. Each supports the low, medium and high settings used here. We combined them with two output caps and three workflow families, then added immediate rejection. This gives fifty-five candidates.
 
-The prices shown are published uncached text-token tariffs. Task correctness, token usage and elapsed time come from stipulated response laws. We use the same response law for each provider. This makes provider selection depend on the tariffs by construction. Provider advice can guide which candidates to evaluate first. Task measurements must determine their outcome probabilities.
+The prices shown are published uncached text-token tariffs. The simulator sets the defect and detection probabilities, token counts and call durations. We use the same rules for each provider. This makes provider selection depend on the tariffs. Provider advice can guide which candidates to evaluate first. Task measurements must determine their outcome probabilities.
 
 [Sources and scope — Registry snapshot 2026-11-13. openaiSol2026, https://developers.openai.com/api/docs/models/gpt-6.1-sol. anthropicSonnet2026, https://platform.claude.com/docs/en/models/sonnet-5-5/overview. gemini_thinking, https://ai.google.dev/gemini-api/docs/thinking. googlePricing2026, https://ai.google.dev/gemini-api/docs/pricing. Full parameter compatibility and billing scope in reproducibility/model-registry.json.]
 
@@ -133,7 +133,7 @@ The horizontal axis varies the allowed defect fraction. The vertical axis shows 
 
 The blue curve permits every candidate family. The grey curve permits single calls and rejection. At a ten per cent defect limit, the full pool is feasible at about 38 dollars and 80 cents per thousand attempts. The single-call pool is infeasible at the same completion and deadline requirements. Adding review workflows changes which trade-offs are available.
 
-This result belongs to the stipulated response law and the fifty-five candidates. The calculation establishes the finite-pool optimum using known synthetic moments. Production quality for each provider requires measured model executions. The next chart shows the routing mixture that produces the highlighted point.
+This is the minimum cost for the fifty-five simulated candidates at the service limits shown. Comparing provider quality in production requires measured workflow executions. The next chart shows the routing mixture that produces the highlighted point.
 
 [Sources and scope — Simulation seed 20261113. reproducibility/frontier.csv and simulation-results.json. Exact synthetic moments over the finite experiment. The single-only pool includes rejection. No LLM API calls were made. Provider interfaces and tariffs are documented in model-registry.json.]
 

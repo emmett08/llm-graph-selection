@@ -82,3 +82,13 @@ The 4,096/8,192 caps are study design choices inside supported limits. Provider 
 | `agentPatternsTopology` | [AgentPatterns.ai taxonomy](https://agentpatterns.ai/patterns/multi-agent/multi-agent-topology-taxonomy/), The three topologies and Choose a coordination pattern. | Distinguishes centralised, peer and hybrid coordination from the order in which work proceeds. |
 | `huangTopologies2026` | [Ken Huang's guide](https://kenhuangus.substack.com/p/multi-agent-design-patterns-architectural), public taxonomy, supervisor example and architecture matrix. | Describes nested supervisors and asynchronous event buses as architecture choices. The detailed sections after the public preview were unavailable. |
 | `zhangMarlTopology2025` | [Zhang et al., arXiv:2510.07888v1](https://arxiv.org/html/2510.07888v1), §III and Table I. | The studied reinforcement-learning agents use directed communication with different orders and depths. LLM-specific costs and service outcomes require complete LLM executions. |
+
+## Error propagation sources checked on 16 November 2026
+
+| BibTeX key | Evidence location | Use |
+| --- | --- | --- |
+| `haMitchell2026` | [Ha and Mitchell, ICML 2026, PMLR 306, 39080–39107](https://proceedings.mlr.press/v306/ha26a.html), abstract. | In controlled ConceptARC experiments, incorrect peer answers could displace correct answers. Revision could also move a wrong answer closer to the correct one. These results concern grid reasoning. |
+| `dhuliawala2024cove` | [Dhuliawala et al., Findings of ACL 2024, pp. 3563–3578](https://aclanthology.org/2024.findings-acl.212/), [§§3.3 and 4.3, Table 1](https://aclanthology.org/2024.findings-acl.212.pdf). | The factored verification prompts exclude the original answer. Precision improved on the two list tasks relative to joint verification, supporting the authors' explanation that separating the contexts limits repetition of the original answer's hallucinations. |
+| `gong2026upstream` | [Gong et al., arXiv:2609.36855](https://arxiv.org/abs/2609.36855), §§2.1, 3.3–3.4 and Appendix A. | This preprint compares no upstream message, the original message and a message with its conclusion reversed while holding the downstream task and evidence fixed. In 77 of 82 audited correct-to-incorrect transitions, the receiver adopted the specific wrong answer in the upstream message. The finding motivates a controlled handoff comparison. |
+
+These studies motivate measuring propagation and correction in the release-note workflow. The simulator uses its own probabilities.

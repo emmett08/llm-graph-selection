@@ -4,7 +4,7 @@ import json
 import numpy as np
 from scipy.optimize import linprog
 
-# Stipulated whole-workflow outcomes, not measurements of real LLMs.
+# Whole-workflow coefficients chosen for the arithmetic example.
 names = ['single_fast', 'serial_review', 'reject', 'parallel_review']
 a = [F(1), F(4,5), F(0), F(9,10)]
 b = [F(1,5), F(1,25), F(0), F(9,200)]
