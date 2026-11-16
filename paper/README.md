@@ -15,7 +15,7 @@ The simulation combines three models with three graph families. Sweeping three e
 Every call within a simulated graph uses the same model and request settings. The general formulation lets each node have its own settings.
 Provider documentation supplies valid request settings and token prices. The simulator specifies how the calls behave and how it calculates their token use and duration. It applies those rules equally to every provider, so provider choice depends on token prices.
 
-The main example minimises cost per original attempt under service limits that apply across each scenario. Rejected attempts stay in the denominator, and late outputs can still count as accepted. An on-time accepted result and an on-time accepted result free of material defects are separate outcomes. In the simulator, the router receives the true task group. An operational evaluation can route on the classifier's observed group and assess service outcomes using independently labelled true groups.
+The main example minimises cost per original attempt under service limits that apply across each scenario. A result counts as accepted when the workflow releases it under the service's terminal rule. For release notes, the corresponding requirement is a minimum publication rate. Rejected attempts stay in the denominator, and late outputs can still count as accepted. An on-time accepted result and an on-time accepted result free of material defects are separate outcomes. In the simulator, the router receives the true task group. An operational evaluation can route on the classifier's observed group and assess service outcomes using independently labelled true groups.
 
 ## Reproduce the results
 
@@ -60,7 +60,7 @@ Rational arithmetic verifies the small appendix example by matching the cost of 
 The simulation validates each outcome distribution before checking the selected rules against the service constraints. With known coefficients, the reduced-cost search must reproduce the full-pool optimum.
 
 The main confidence bounds use outcome counts equivalent to 4.32 million synthetic trials across 216 cells whose coefficients are treated as unknown.
-Sensitivity analyses change the stipulated single-call defect rates, exclude immediate rejection, vary the adverse migration share between 59% and 61%, and apply service limits within each group or require acceptance by the deadline. The timing analyses also test changes in queue delay. Each reported numerical result retains the assumptions of its corresponding simulation.
+Sensitivity analyses reduce the probability that a single call yields an accepted result with a material defect and test the effect of excluding immediate rejection. The serial review sensitivity lets repair retain an existing defect or introduce one after a false flag. Further analyses vary the adverse migration share between 59% and 61%, apply service limits within each group, or require acceptance by the deadline. The timing analyses also test changes in queue delay. Each estimate describes the simulator under the inputs used for that comparison.
 
 All cited sources have a retained verification entry. The nine slides from 13 November 2026 were visually reviewed.
 

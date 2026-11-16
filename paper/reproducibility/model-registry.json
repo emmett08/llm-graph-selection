@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "retrieved_on": "2026-11-13",
-  "scope": "Published API identities, compatible reasoning controls and standard uncached text-token list prices. All simulated task quality, usage and elapsed-time laws are separately stipulated.",
+  "scope": "Published API identities, compatible reasoning controls and standard uncached text-token list prices. The simulator supplies its own outcome probabilities, token counts and timing formula.",
   "billing_scope": "USD per million tokens, standard direct API tier, uncached short text requests, no batch, priority, regional, tool, tax or cache charges. Reasoning tokens belong in the billable output total and must not be charged twice.",
   "selected_efforts": [
     "low",

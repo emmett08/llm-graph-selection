@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
@@ -11,7 +12,7 @@ from scipy.optimize import linprog
 from paired_calibration import paired_risk_upper
 from simulate_workflows import (
     ALPHA, DEADLINE, DELTA, EPSILON, GAMMA, GROUPS, HERE, MU, SCENARIOS,
-    calibration, candidates, metrics, moment_table,
+    SerialRepair, calibration, candidates, metrics, moment_table,
 )
 
 CHECK_TOL = 1e-8
@@ -212,6 +213,37 @@ def single_call_sensitivity(pool, moments, reject):
                 original_pool_feasible=False, reoptimised=sensitivity)
 
 
+def serial_handoff_sensitivity(pool, baseline_moments, baseline):
+    """Change how completed serial repairs respond to the review flag."""
+    repair = SerialRepair(retention=0.50, false_flag_harm=0.20)
+    _, moments, _ = moment_table(pool, serial_repair=repair)
+    nonserial = [j for j, candidate in enumerate(pool) if candidate.topology != "serial"]
+    if not np.array_equal(moments[:, nonserial], baseline_moments[:, nonserial]):
+        raise AssertionError("Changing serial repairs changed another workflow family")
+    if not np.allclose(moments[..., 2:], baseline_moments[..., 2:], atol=1e-15, rtol=0):
+        raise AssertionError("Changing the repair outcome changed the calls or their timing")
+
+    examples = {}
+    draft_defect_probability = 0.0744  # Non-blind, easy nominal task at medium effort.
+    for flag, draft_has_defect in [("true_flag", True), ("false_flag", False)]:
+        retained, introduced = repair.defect_probabilities(draft_defect_probability, draft_has_defect)
+        examples[flag] = dict(retained=retained, introduced=introduced, clean=1 - retained - introduced)
+
+    outcomes = metrics(baseline[1], moments)
+    for row in outcomes:
+        row["violated_limits"] = service_limit_violations(row)
+    if "defect" not in outcomes[SCENARIOS.index("adverse")]["violated_limits"]:
+        raise AssertionError("Serial handoff sensitivity should break the baseline's adverse defect limit")
+    reoptimised = describe(route(service_coefficients(moments)), moments)
+    if not reoptimised["feasible"] or any(service_limit_violations(row) for row in reoptimised["scenarios"]):
+        raise AssertionError("The reoptimised rule should meet every service limit")
+    return dict(assigned_repair_parameters=asdict(repair),
+                nonblind_example=dict(draft_defect_probability=draft_defect_probability,
+                                      outcome_after_repair=examples),
+                original_rule_under_changed_law=outcomes,
+                reoptimised=reoptimised)
+
+
 def main():
     registry = json.loads((HERE / "model-registry.json").read_text())
     data = json.loads((HERE / "simulation-results.json").read_text())
@@ -287,7 +319,7 @@ def main():
         raise AssertionError("Stricter timely group limits should not reduce the aggregate optimum")
 
     report = dict(
-        evidence="Stipulated finite simulator, seeded calibration, no provider executions",
+        evidence="Finite simulation with assigned outcome probabilities and seeded synthetic calibration. No provider calls.",
         settings=dict(defect_limit=EPSILON, completion_floor=GAMMA, lateness_ceiling=DELTA,
                       deadline_seconds=DEADLINE, n_per_uncertain_cell=n, family_alpha=ALPHA),
         dominance=dict(original_per_group=len(pool), retained_per_group=list(map(len, retained)),
@@ -303,6 +335,7 @@ def main():
         no_immediate_rejection=without_immediate_rejection(pool, moments, reject, full),
         task_mix_sensitivity=task_mix_sensitivity(moments, full),
         single_call_sensitivity=single_call_sensitivity(pool, moments, reject),
+        serial_handoff_sensitivity=serial_handoff_sensitivity(pool, moments, full),
     )
     output = Path(HERE) / "refinement-results.json"
     output.write_text(json.dumps(report, indent=2) + "\n")

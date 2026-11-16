@@ -30,16 +30,16 @@ The simulator records the following outcomes for each attempt.
 
 | Symbol | Outcome |
 | --- | --- |
-| A | Acceptance indicator |
+| A | Indicator that the workflow releases a result under the terminal service rule |
 | Y | Acceptance with a material defect, so Y≤A |
 | C | Total charge in USD |
 | T | Elapsed time in seconds |
 | L | Lateness indicator, L=1{T>180} |
 
 The baseline acceptance rule permits late outputs, which have A=L=1. Every rejected attempt retains its measurements (C,T). Immediate rejection has A=Y=C=T=L=0.
-In each scenario, the acceptance floor is 0.80, subject to a material-defect ceiling of 0.10 among accepted outputs. At most 0.15 of all attempts may exceed the deadline. The objective minimises the highest expected cost per original attempt across scenarios. Acceptance, lateness and mean cost use every original attempt in their denominators.
+Each scenario requires a minimum acceptance rate of 0.80. Up to 0.10 of accepted outputs may have a material defect, and at most 0.15 of all attempts may exceed the deadline. The objective minimises the highest expected cost per original attempt across scenarios. Acceptance, lateness and mean cost use every original attempt in their denominators.
 
-When acceptance has to occur by the deadline, use A′=A(1−L) and Y′=Y(1−L). This changes which outcomes count towards the acceptance floor and which accepted outputs enter the defect calculation. The joint on-time and defect-free rate averages (A−Y)(1−L) over all attempts. It measures whether the attempt delivered an accepted result by the deadline without a material defect.
+When acceptance has to occur by the deadline, use A′=A(1−L) and Y′=Y(1−L). This changes which outcomes count towards the minimum acceptance rate and which accepted outputs enter the defect calculation. The joint on-time and defect-free rate averages (A−Y)(1−L) over all attempts. It measures whether the attempt delivered an accepted result by the deadline without a material defect.
 
 ## Shared latent state
 
@@ -57,7 +57,7 @@ All calls in the graph share the state (D,B,S). Subsequent random draws are cond
 | Merge | 5,000 | 700 / 1,800 / 4,200 | 1,000 |
 
 Input tokens equal the base plus 1,000D. Let O be the desired generated-token count and H the selected cap. The billed number is min(O,H), with each reasoning or visible answer token counted once.
-The simulator defines completion by O≤H. A truncated call causes rejection under the graph rules below. This cap-to-failure relation is stipulated for the experiment.
+The simulator completes a call when O≤H. If O>H, the call is truncated and the workflow rejects the attempt.
 The billing model charges short-context, uncached input tokens at the registry's standard rate. It includes the model-call charges defined here, with zero orchestration charges.
 
 Let (I,U) give the input-token count followed by the billed generated count. Call cost is (p_in I+p_out U)/10^6 USD.
@@ -68,7 +68,7 @@ Let (I,U) give the input-token count followed by the billed generated count. Cal
 | Sonnet | 2 | 10 |
 | Hydrogen | 1.5 | 7.5 |
 
-The stipulated call duration is (1+0.7S)(2+0.008I+0.012U) seconds. Total cost sums every executed call's charge. Elapsed time accumulates over sequential stages, taking the maximum draft duration within a parallel stage. In this simulator, common settings under the shared latent state give the two drafts equal durations.
+The simulator calculates call duration in seconds as (1+0.7S)(2+0.008I+0.012U). Total cost sums every executed call's charge. Elapsed time accumulates over sequential stages, taking the maximum draft duration within a parallel stage. In this simulator, common settings under the shared latent state give the two drafts equal durations.
 The simulator holds execution laws fixed across routing mixtures, so the coefficients remain valid as routing probabilities change.
 
 ## Outcome generation
@@ -114,7 +114,7 @@ Each scenario contributes four inequalities.
 | --- | --- |
 | Cost upper bound | c−z≤0 |
 | Defect limit | b−0.10a≤0 |
-| Acceptance floor | −a≤−0.80 |
+| Minimum acceptance rate | −a≤−0.80 |
 | Lateness ceiling | ℓ≤0.15 |
 
 SciPy's HiGHS solver computes the solution. The code requires the maximum inequality residual to be below 10^−8.
@@ -151,17 +151,20 @@ Unplotted grid points are infeasible. Locating the feasibility threshold between
 
 ## Sensitivity analyses
 
-`refine_selection.py` reruns the population calculations with changes to the candidate pool, scenario weights or service requirements.
+`refine_selection.py` reruns the population calculations with changes to defect probabilities, the candidate pool, scenario weights or service requirements.
 
 | Change | Inputs used in the comparison |
 | --- | --- |
 | Lower single-call defect rates | Multiply the joint defective-acceptance coefficient by 0.75 in every single-call cell. Keep acceptance, cost, lateness and all multicall coefficients fixed. |
+| Change the serial repair outcome | Outside a shared blind spot, make the probability of a defect after repair depend on whether the first review detected a defect or falsely flagged a sound draft. Apply the final review under the original rules. |
 | Remove immediate rejection | Exclude the zero-outcome candidate. Other workflows retain their original acceptance and rejection rules. |
 | Shift the adverse task mix | Vary the adverse migration share between 0.59 and 0.61 with complementary routine shares and fixed per-group outcome coefficients. Keep the nominal scenario as specified above. |
 | Change the service scope | Apply the service limits within each represented task group, require acceptance by the deadline, or combine those requirements. Calculate on-time outcomes from the joint terminal distributions. |
+
+For completed repairs in the serial comparison, let r=0.65p, the baseline repair defect probability when B=0. If the initial draft has a detected defect, the repair retains it with probability 0.50. If the repair removes it, a new defect occurs with probability r. The revised draft therefore has a material defect with probability 0.50+0.50r. If the review falsely flags a sound draft, the repair introduces a defect with probability r and adds a 0.20 probability of introducing a defect conditional on the baseline repair producing a sound result. The resulting probability is r+(1−r)×0.20. A shared blind spot still makes the revised draft defective. The first and final review probabilities, call costs and durations follow the original rules. These probabilities are inputs to a synthetic comparison.
 
 ## Scope of the results
 
 The simulator derives outcome coefficients from complete workflows under shared conditions. These coefficients account for conditional execution through repair paths, including rejection at a token cap. Duration calculations include parallel work.
 Using conservative confidence bounds restricts the feasible set and can increase the minimum cost. A small sample can produce bounds too wide for any routing rule to meet all the constraints.
-The numerical optimum applies to these 55 candidates under the stipulated laws. Deployment conclusions require measured workflow outcomes under the intended load. A proposed search policy needs assessment on held-out workloads under an explicit evaluation budget, including when it uses provider advice through a predictor.
+The numerical optimum applies to these 55 candidates with the simulator's defect probabilities, token counts and call durations. Deployment conclusions require measured workflow outcomes under the intended load. A proposed search policy needs assessment on held-out workloads under an explicit evaluation budget, including when it uses provider advice through a predictor.

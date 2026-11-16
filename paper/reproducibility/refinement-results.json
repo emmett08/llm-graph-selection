@@ -1,5 +1,5 @@
 {
-  "evidence": "Stipulated finite simulator, seeded calibration, no provider executions",
+  "evidence": "Finite simulation with assigned outcome probabilities and seeded synthetic calibration. No provider calls.",
   "settings": {
     "defect_limit": 0.1,
     "completion_floor": 0.8,
@@ -1141,6 +1141,104 @@
           "completion": 0.7250581781870565,
           "risk": 0.11302875000000003,
           "lateness": 0.0
+        }
+      ]
+    }
+  },
+  "serial_handoff_sensitivity": {
+    "assigned_repair_parameters": {
+      "retention": 0.5,
+      "false_flag_harm": 0.2
+    },
+    "nonblind_example": {
+      "draft_defect_probability": 0.0744,
+      "outcome_after_repair": {
+        "true_flag": {
+          "retained": 0.5,
+          "introduced": 0.02418,
+          "clean": 0.47582
+        },
+        "false_flag": {
+          "retained": 0.0,
+          "introduced": 0.238688,
+          "clean": 0.761312
+        }
+      }
+    },
+    "original_rule_under_changed_law": [
+      {
+        "scenario": "nominal",
+        "acceptance": 0.8694079222363917,
+        "joint_defect": 0.06800770211889201,
+        "risk": 0.07822300715175763,
+        "cost": 0.03442874001846164,
+        "late": 0.0850555249430914,
+        "violated_limits": []
+      },
+      {
+        "scenario": "adverse",
+        "acceptance": 0.7646738328071813,
+        "joint_defect": 0.09395729710367323,
+        "risk": 0.12287238437171072,
+        "cost": 0.03879833832489506,
+        "late": 0.15000000000000002,
+        "violated_limits": [
+          "completion",
+          "defect"
+        ]
+      }
+    ],
+    "reoptimised": {
+      "feasible": true,
+      "objective": 0.045117642395422625,
+      "positive_weights": 5,
+      "true_worst_cost": 0.04511764239542263,
+      "scenarios": [
+        {
+          "scenario": "nominal",
+          "acceptance": 0.8866943001620048,
+          "joint_defect": 0.048637369595273844,
+          "risk": 0.05485246672544019,
+          "cost": 0.042734403206503416,
+          "late": 0.1054607692952558
+        },
+        {
+          "scenario": "adverse",
+          "acceptance": 0.8,
+          "joint_defect": 0.08000000000000002,
+          "risk": 0.10000000000000002,
+          "cost": 0.04511764239542263,
+          "late": 0.15
+        }
+      ],
+      "groups": [
+        {
+          "group": "routine",
+          "scenario": "nominal",
+          "completion": 0.9600007411267347,
+          "risk": 0.04482209204538302,
+          "lateness": 0.11170484252000001
+        },
+        {
+          "group": "routine",
+          "scenario": "adverse",
+          "completion": 0.941615139880236,
+          "risk": 0.0763693030248047,
+          "lateness": 0.16990774319999996
+        },
+        {
+          "group": "migration",
+          "scenario": "nominal",
+          "completion": 0.7156459379109688,
+          "risk": 0.08624795915902844,
+          "lateness": 0.09089126510418595
+        },
+        {
+          "group": "migration",
+          "scenario": "adverse",
+          "completion": 0.7055899067465096,
+          "risk": 0.12102356418368276,
+          "lateness": 0.13672817120000003
         }
       ]
     }
