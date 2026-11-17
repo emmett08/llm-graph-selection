@@ -2,16 +2,16 @@
   "schema_version": "1.0",
   "figure_id": "workflow-topologies",
   "purpose": {
-    "reader_question": "How do execution dependencies and control over the next operation differ across the illustrated workflows?",
-    "expected_reading": "The first two rows show serial stages, gated repair, concurrent stages and classifier-led routing. The last row distinguishes supervisor delegation, stateful transfer of control and bounded peer exchange.",
-    "claim": "Execution order alone does not identify who decides the next operation. The bottom row gives three different arrangements of that authority.",
-    "scope": "The simulation uses panels (a), (c) and (d). Panels (b) and (e) through (i) are illustrative. The supervisor panel shows a dispatch to both selected workers. The peers exchange messages between their two rounds.",
+    "reader_question": "Which operations exchange evidence and who decides what runs next in each workflow?",
+    "expected_reading": "The panels distinguish a single call, a single-agent loop, a fixed pipeline, routing, parallel fan-out, evaluator feedback, runtime delegation, peer debate and one permitted repair.",
+    "claim": "The arrangements differ in execution dependencies and in how they choose the next operation.",
+    "scope": "Panels (a), (e) and (i) depict the three simulator execution structures. Other panels illustrate workflow arrangements.",
     "permitted_inferences": [
-      "Recover the shown operation dependencies, state transfer, communication paths and the location of execution control."
+      "Recover the operation dependencies, branch guards, message flow, control, and stopping rules shown."
     ],
     "prohibited_inferences": [
-      "Runtime, cost, defect rate or provider ranking from graph layout.",
-      "Relative performance of illustrative architectures."
+      "Runtime, per-attempt cost, failure rate or provider ranking from graph layout.",
+      "Relative performance, complete coverage, or empirical prevalence of the illustrative arrangements."
     ]
   },
   "inputs": [
@@ -19,21 +19,21 @@
       "id": "source-1",
       "path": "reproducibility/simulate_workflows.py",
       "status": "simulated",
-      "source_reference": "Solo, serial and parallel draft-merge execution rules."
+      "source_reference": "The single-call, parallel and serial-repair branches of conditional_outcomes."
     },
     {
       "id": "source-2",
       "path": "main.tex",
       "status": "illustrative",
-      "source_reference": "Section 2 describes the choice of execution controller, its state and the terminal decision."
+      "source_reference": "Section 2 and the figure caption define the topology, evidence flow and termination."
     }
   ],
   "constructions": [
     {
       "id": "directed-graph",
       "kind": "topology",
-      "definition": "Directed graph with an explicitly declared node set and directed adjacency.",
-      "method": "TikZ graphs declares adjacency over vertices with fixed layout coordinates. The caption defines scope.",
+      "definition": "Directed adjacency of named operations and boundaries, including guarded edges, shared-state exchange and bounded feedback.",
+      "method": "The TikZ source places named nodes and draws edges between them. The positions encode adjacency only.",
       "input_ids": [
         "source-1",
         "source-2"
@@ -46,14 +46,14 @@
       "marks": "Direct operation labels",
       "mark_role": "diagram_node",
       "channel": "text",
-      "represents": "Bold labels identify model calls. Task and Result mark boundaries. Routing rule and Agree or reject identify deterministic operations.",
+      "represents": "Bold labels identify model calls. Unemphasised labels identify tools, rules, stored information or workflow boundaries.",
       "interpretation": "relational",
       "construction_ids": [
         "directed-graph"
       ],
       "scale_or_mapping": {
         "type": "nonmetric",
-        "definition": "Bold labels identify model calls. Task and Result mark boundaries. Routing rule and Agree or reject identify deterministic operations."
+        "definition": "Bold labels identify model calls. Unemphasised labels identify tools, rules, stored information or workflow boundaries."
       }
     },
     {
@@ -61,14 +61,14 @@
       "marks": "Directed arrows",
       "mark_role": "data_mark",
       "channel": "incidence",
-      "represents": "Arrows identify call dependencies or message availability. Conditions beside arrows name the branch decision. In (i), crossing arrows carry messages and dashed vertical arrows retain local state.",
+      "represents": "Arrows identify operation dependencies and message paths. Guard labels indicate execution conditions. Two-headed arrows between peers and shared notes represent reading and writing.",
       "interpretation": "relational",
       "construction_ids": [
         "directed-graph"
       ],
       "scale_or_mapping": {
         "type": "nonmetric",
-        "definition": "Arrows identify call dependencies or message availability. Conditions beside arrows name the branch decision. In (i), crossing arrows carry messages and dashed vertical arrows retain local state."
+        "definition": "Arrows identify operation dependencies and message paths. Guard labels indicate execution conditions. Two-headed arrows between peers and shared notes represent reading and writing."
       }
     }
   ],
@@ -80,23 +80,23 @@
     "colour_intent": "colour_and_greyscale",
     "expected_labels": [
       "Single call",
-      "Serial review",
-      "One repair",
-      "Parallel drafts",
-      "Parallel reviews",
-      "Specialist routing",
-      "Recheck",
+      "Single-agent loop",
+      "Sequential pipeline",
+      "Routing",
+      "Parallel fan-out",
+      "Evaluator–optimiser loop",
+      "Orchestrator–worker",
+      "Decentralised debate",
+      "Review with one repair",
+      "May self-review",
+      "Validate",
       "Merge + check",
-      "Adjudicate",
-      "Supervisor delegation",
-      "Selects workers",
-      "Combines results",
-      "Stateful handoff",
-      "state + control",
-      "Bounded peer exchange",
-      "Round 1",
-      "Round 2",
-      "Agree or reject"
+      "Rubric",
+      "Chooses subtasks",
+      "Synthesises results",
+      "Shared notes",
+      "agree or cap",
+      "Recheck"
     ],
     "manuscript_profile": "figures/manuscript-profile.json"
   },
