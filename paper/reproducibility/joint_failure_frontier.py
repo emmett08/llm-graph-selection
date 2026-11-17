@@ -326,10 +326,10 @@ def render_figure(rows, frozen, baseline):
 
     lines.append(rf"\draw[FailureMixed,line width=.65pt] {point(baseline.failure, baseline.cost)} circle[radius=2pt];")
     labels = (
-        (FROZEN, r"One frozen workflow", "FailureFrozen"),
+        (FROZEN, r"One fixed\\configuration", "FailureFrozen"),
         (FAMILY, r"One topology family", "FailureFamily"),
-        (RANDOMISED_WITHOUT_REJECTION, r"Mixed without\\immediate rejection", "FailureNoReject"),
-        (RANDOMISED, r"Mixed routing", "FailureMixed"),
+        (RANDOMISED_WITHOUT_REJECTION, r"Routing without\\immediate rejection", "FailureNoReject"),
+        (RANDOMISED, r"Unrestricted routing", "FailureMixed"),
     )
     for method, label, colour in labels:
         endpoint = rows[upper_cap][method]
@@ -390,7 +390,7 @@ def main():
     check_cost_gap(pool, distributions, moments, cost_caps, failure)
     write_or_check(CSV_PATH, render_csv(rows), args.check)
     write_or_check(FIGURE_PATH, render_figure(rows, frozen, baseline), args.check)
-    print("Joint terminal failure, nested policy classes and frontier outputs verified.")
+    print("Joint terminal failure, routing and configuration comparisons, and frontier outputs verified.")
 
 
 if __name__ == "__main__":
