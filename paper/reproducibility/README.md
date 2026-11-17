@@ -33,7 +33,7 @@ Each data figure comes from a source CSV. The joint-failure comparison writes in
 | `calibration-counts.csv` | Nonzero multinomial counts for the main sample. Join to `finite-outcomes.csv` on (group, candidate, scenario, outcome). |
 | `calibration-moments.csv` | Primary sample estimates with simultaneous one-sided bounds |
 | `frontier.csv` | Objective values at each sampled conditional-defect threshold, including feasibility flags |
-| `joint_failure_frontier.csv` | Minimum cost and attained worst-scenario failure at each ceiling for the four policy classes |
+| `joint_failure_frontier.csv` | Minimum cost and highest scenario failure rate at each ceiling for the four routing and configuration comparisons |
 | `routing-plot-data.csv` | Nonzero weights of the exact full-pool solution |
 | `calibration-size.csv` | Population outcomes for feasible rules selected from one separately seeded draw per sample size |
 | `search-trace.csv` | Restricted-pool objective at each solve, identifying any added candidate with its reduced cost |
@@ -84,4 +84,4 @@ Run `python fractional_check.py` to check bisection's agreement with the Charnes
 
 Run `python joint_failure_frontier.py` to regenerate `joint_failure_frontier.csv` and `../figures/joint-failure-frontier.tikz.tex`. The script scores each enumerated terminal outcome with `F = 1 - (A - Y) * (1 - L)`. It retains the original service limits and solves the problem at each declared failure ceiling. For a given minimum cost, it computes the lowest worst-scenario failure rate. Use `--check` to verify the archived outputs and the two-sided cost-gap example. Use `--failure-cap .30` to print the four comparisons at a single ceiling.
 
-The one-family and frozen-configuration comparisons share the candidate pool of the mixture excluding immediate rejection. The family comparison allows settings to vary inside the chosen family. A frozen configuration uses the same settings for all tasks. The figure plots the mixture objectives only at solved grid points and derives the frozen-configuration step by checking every candidate directly. The inputs describe a synthetic workload with assigned outcome probabilities.
+The one-family and fixed-configuration comparisons use the same candidates as routing without immediate rejection. A routing rule restricted to one family can use different model or request settings within that family. A single fixed configuration handles every task with the same graph and settings. The figure plots the minimum costs for routing at the sampled ceilings. It derives the step for a fixed configuration by checking every candidate directly. The inputs describe a synthetic workload with assigned outcome probabilities.
