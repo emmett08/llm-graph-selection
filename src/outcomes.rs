@@ -1,6 +1,6 @@
 //! Build cell coefficients from a finite distribution over complete executions.
 
-use crate::{probability, Cell, Error, Moments};
+use crate::{probability, Cell, Error, Moments, OutcomeMeans};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TerminalOutcome {
@@ -29,7 +29,8 @@ pub enum Timing {
 }
 
 /// Aggregate jointly observed terminal outcomes, retaining rejected attempts in
-/// the cost and lateness denominator. Delay must leave costs and pre-delay
+/// the cost, lateness and failure denominators. Success requires a defect-free
+/// accepted result by the deadline. Delay must leave costs and pre-delay
 /// acceptance/defect classifications valid throughout the permitted route mixes.
 pub fn cell_from_outcomes(
     outcomes: &[TerminalOutcome],
@@ -57,8 +58,10 @@ pub fn cell_from_outcomes(
     let mut joint_defect = 0.0;
     let mut lateness = 0.0;
     let mut clean = 0.0;
+    let mut failure = 0.0;
     let mut cost = 0.0;
     let mut queued_mass_on_time = 0.0;
+    let mut queued_clean_on_time = 0.0;
     for o in outcomes {
         let p = o.probability;
         if !probability(p)
@@ -79,6 +82,14 @@ pub fn cell_from_outcomes(
         } else if o.queued {
             queued_mass_on_time += p;
         }
+        if o.accepted && !o.defective && on_time_at_bound {
+            clean += p;
+            if o.queued {
+                queued_clean_on_time += p;
+            }
+        } else {
+            failure += p;
+        }
         match timing {
             Timing::Observed | Timing::QueueEnvelope { .. } => {
                 if o.accepted {
@@ -91,9 +102,6 @@ pub fn cell_from_outcomes(
             Timing::Timely | Timing::TimelyQueueEnvelope { .. } => {
                 if o.accepted && on_time_at_bound {
                     acceptance += p;
-                }
-                if o.accepted && !o.defective && on_time_at_bound {
-                    clean += p;
                 }
                 if o.defective && actual_now {
                     joint_defect += p;
@@ -112,15 +120,23 @@ pub fn cell_from_outcomes(
         cost: cost / mass,
         lateness: (lateness / mass + exceedance.min(queued_mass_on_time / mass)).min(1.0),
     };
+    // A delay beyond the cap can turn a success into a failure only when
+    // that success is both queued and timely at the cap.
+    let failure_upper = (failure / mass + exceedance.min(queued_clean_on_time / mass)).min(1.0);
     let cell = match timing {
-        Timing::Observed | Timing::Timely => Cell::Point(bound),
-        Timing::QueueEnvelope { .. } => Cell::Conservative {
+        Timing::Observed | Timing::Timely => Cell::PointWithFailure(OutcomeMeans {
+            moments: bound,
+            failure: failure_upper,
+        }),
+        Timing::QueueEnvelope { .. } => Cell::FailureBound {
             bounds: bound,
-            paired_risk: None,
+            failure_upper,
+            clean_lower: None,
         },
-        Timing::TimelyQueueEnvelope { .. } => Cell::TimelyQueue {
+        Timing::TimelyQueueEnvelope { .. } => Cell::FailureBound {
             bounds: bound,
-            clean_lower: (clean / mass).min(1.0),
+            failure_upper,
+            clean_lower: Some((clean / mass).min(1.0)),
         },
     };
     cell.validate()?;
@@ -175,5 +191,74 @@ mod tests {
         assert_eq!(cell.moments().lateness, 0.0);
         assert_eq!(cell.moments().acceptance, 1.0);
         assert!(cell_from_outcomes(&[], 10.0, Timing::Observed).is_err());
+    }
+
+    #[test]
+    fn counts_overlapping_failure_events_once() {
+        let clean = TerminalOutcome {
+            probability: 0.5,
+            accepted: true,
+            defective: false,
+            cost: 0.0,
+            duration: 1.0,
+            queued: false,
+        };
+        let outcomes = [
+            clean,
+            TerminalOutcome {
+                probability: 0.25,
+                defective: true,
+                duration: 2.0,
+                ..clean
+            },
+            TerminalOutcome {
+                probability: 0.25,
+                accepted: false,
+                ..clean
+            },
+        ];
+        for timing in [Timing::Observed, Timing::Timely] {
+            let Cell::PointWithFailure(means) = cell_from_outcomes(&outcomes, 1.0, timing).unwrap()
+            else {
+                panic!("expected exact failure coefficient");
+            };
+            assert_eq!(means.failure, 0.5);
+        }
+    }
+
+    #[test]
+    fn queue_exceedance_only_adds_failures_among_queued_successes() {
+        let clean = TerminalOutcome {
+            probability: 0.375,
+            accepted: true,
+            defective: false,
+            cost: 0.0,
+            duration: 0.5,
+            queued: false,
+        };
+        let outcomes = [
+            clean,
+            TerminalOutcome {
+                probability: 0.125,
+                queued: true,
+                ..clean
+            },
+            TerminalOutcome {
+                probability: 0.5,
+                defective: true,
+                queued: true,
+                ..clean
+            },
+        ];
+        let timing = Timing::QueueEnvelope {
+            max_delay: 0.25,
+            exceedance: 0.5,
+        };
+        let Cell::FailureBound { failure_upper, .. } =
+            cell_from_outcomes(&outcomes, 1.0, timing).unwrap()
+        else {
+            panic!("expected an upper bound on failure");
+        };
+        assert_eq!(failure_upper, 0.625);
     }
 }
