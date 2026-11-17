@@ -66,4 +66,4 @@ Sensitivity analyses reduce the probability that a single call yields an accepte
 
 All cited sources have a retained verification entry. The nine slides from 13 November 2026 were visually reviewed.
 
-The results describe the workflows in the finite simulator. A prospective shadow study would compare the incumbent triage process, a single tool-using agent and the candidate multi-agent workflows on eligible alerts. The manuscript distinguishes simulated optimisation from this proposed validation. Where the routing mix affects outcomes through shared capacity, evaluate complete policies at the intended load.
+The numerical results use the simulator's assigned outcome probabilities. The proposed shadow study would compare the incumbent triage process, a single tool-using agent and the candidate multi-agent workflows on the same eligible alerts. When shared capacity makes outcomes depend on routing weights, run independent workload repetitions for each deployment design at the intended load.
