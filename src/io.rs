@@ -5,9 +5,9 @@
 //! fields may contain commas and doubled quotes, but must fit on one line.
 //! Axis order comes from the first occurrence of each ID in the data file.
 
-use crate::calibration::{CalibrationCell, CalibrationMethod};
+use crate::calibration::{CalibrationCell, CalibrationMethod, FailureCalibrationCell};
 use crate::outcomes::{cell_from_outcomes, TerminalOutcome};
-use crate::{Cell, Error, Moments, Study};
+use crate::{Cell, Error, Moments, OutcomeMeans, Study};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use std::fs::File;
@@ -19,7 +19,9 @@ pub use crate::outcomes::Timing;
 
 /// Read moment rows and scenario weights.
 ///
-/// Data columns are `group,scenario,candidate,acceptance,joint_defect,cost_usd,lateness`.
+/// Required data columns are `group,scenario,candidate,acceptance,joint_defect,cost_usd,lateness`.
+/// An optional `failure` column gives the measured probability of failing the
+/// service obligation over all submissions. No independence assumption is used.
 /// Weight columns are `scenario,group,weight`. Each file must cover its full
 /// Cartesian product exactly once.
 pub fn load_moments(
@@ -29,16 +31,25 @@ pub fn load_moments(
     let csv = Csv::read(path.as_ref())?;
     let axes = Axes::from_csv(&csv)?;
     let fields = csv.fields(["acceptance", "joint_defect", "cost_usd", "lateness"])?;
+    let failure_column = csv.field("failure");
     let mut cells = vec![None; axes.checked_size(csv.rows.len())?];
     for row in &csv.rows {
         let i = axes.index(row);
         let [acceptance, joint_defect, cost, lateness] = row.values(fields)?;
-        let cell = Cell::Point(Moments {
+        let moments = Moments {
             acceptance: clamp_upper_ulp(acceptance),
             joint_defect: clamp_upper_ulp(joint_defect),
             cost,
             lateness: clamp_upper_ulp(lateness),
-        });
+        };
+        let cell = if let Some(column) = failure_column {
+            Cell::PointWithFailure(OutcomeMeans {
+                moments,
+                failure: clamp_upper_ulp(row.value(column)?),
+            })
+        } else {
+            Cell::Point(moments)
+        };
         insert(&mut cells, i, cell, row)?;
     }
     axes.finish(cells, scenario_path.as_ref())
@@ -55,15 +66,41 @@ pub fn load_calibration(
     alpha: f64,
     method: CalibrationMethod,
 ) -> Result<Study, Error> {
+    read_calibration(path.as_ref(), scenario_path.as_ref(), alpha, Some(method))
+}
+
+/// Read calibration summaries with a `failed` count in addition to the usual
+/// calibration columns. Use one family error budget for ten one-sided bounds
+/// per uncertain cell, covering both endpoints of each of the five means.
+///
+/// `failed` counts submitted tasks that fail the service obligation,
+/// including required fallbacks. A zero-attempt row still declares known
+/// immediate rejection. Its counts are zero, and its failure probability is one.
+pub fn load_failure_calibration(
+    path: impl AsRef<Path>,
+    scenario_path: impl AsRef<Path>,
+    alpha: f64,
+) -> Result<Study, Error> {
+    read_calibration(path.as_ref(), scenario_path.as_ref(), alpha, None)
+}
+
+fn read_calibration(
+    path: &Path,
+    scenario_path: &Path,
+    alpha: f64,
+    method: Option<CalibrationMethod>,
+) -> Result<Study, Error> {
     if !(0.0 < alpha && alpha < 1.0) {
         return Err(invalid(
             "family error alpha must lie strictly between zero and one",
         ));
     }
     match method {
-        CalibrationMethod::SeparateHoeffding => (),
-        CalibrationMethod::PairedHoeffding { epsilon }
-        | CalibrationMethod::PairedEmpiricalBernstein { epsilon } => {
+        None | Some(CalibrationMethod::SeparateHoeffding) => (),
+        Some(
+            CalibrationMethod::PairedHoeffding { epsilon }
+            | CalibrationMethod::PairedEmpiricalBernstein { epsilon },
+        ) => {
             if !(0.0..=1.0).contains(&epsilon) {
                 return Err(invalid(
                     "paired calibration epsilon must lie between zero and one",
@@ -72,10 +109,15 @@ pub fn load_calibration(
         }
     }
 
-    let csv = Csv::read(path.as_ref())?;
+    let csv = Csv::read(path)?;
     let axes = Axes::from_csv(&csv)?;
     let counts = csv.fields(["attempts", "accepted", "accepted_defects", "late"])?;
     let costs = csv.fields(["total_cost", "cost_cap"])?;
+    let failure_column = if method.is_none() {
+        Some(csv.fields(["failed"])?[0])
+    } else {
+        None
+    };
     let mut tallies = vec![None; axes.checked_size(csv.rows.len())?];
     for row in &csv.rows {
         let [attempts, accepted, accepted_defects, late] = row.values(counts)?;
@@ -88,36 +130,46 @@ pub fn load_calibration(
             total_cost,
             cost_cap,
         };
-        insert(&mut tallies, axes.index(row), summary, row)?;
+        let failed = failure_column.map(|column| row.value(column)).transpose()?;
+        insert(&mut tallies, axes.index(row), (summary, failed), row)?;
     }
 
     let uncertain_cells = tallies
         .iter()
         .flatten()
-        .filter(|cell| cell.attempts > 0)
+        .filter(|(summary, _)| summary.attempts > 0)
         .count();
     let mut cells = Vec::with_capacity(tallies.len());
     for (i, summary) in tallies.into_iter().enumerate() {
-        let summary = summary.ok_or_else(|| axes.missing_cell(i))?;
+        let (summary, failed) = summary.ok_or_else(|| axes.missing_cell(i))?;
         let cell = if summary.attempts == 0 {
             if summary.accepted != 0
                 || summary.accepted_defects != 0
                 || summary.late != 0
                 || summary.total_cost != 0.0
                 || summary.cost_cap != 0.0
+                || failed.is_some_and(|count| count != 0)
             {
                 return Err(invalid(format!(
                     "known zero-outcome cell {} has nonzero data",
                     axes.cell_name(i)
                 )));
             }
-            Cell::Point(Moments {
+            let moments = Moments {
                 acceptance: 0.0,
                 joint_defect: 0.0,
                 cost: 0.0,
                 lateness: 0.0,
-            })
-        } else {
+            };
+            if failed.is_some() {
+                Cell::PointWithFailure(OutcomeMeans {
+                    moments,
+                    failure: 1.0,
+                })
+            } else {
+                Cell::Point(moments)
+            }
+        } else if let Some(method) = method {
             let calibrated =
                 summary
                     .calibrate(alpha, uncertain_cells, method)
@@ -128,10 +180,52 @@ pub fn load_calibration(
                 bounds: calibrated.conservative,
                 paired_risk: calibrated.risk,
             }
+        } else {
+            FailureCalibrationCell {
+                summary,
+                failed: failed.expect("two-sided calibration requires failed counts"),
+            }
+            .calibrate(alpha, uncertain_cells)
+            .map_err(|error| invalid(format!("calibration cell {}: {error}", axes.cell_name(i))))?
         };
         cells.push(Some(cell));
     }
-    axes.finish(cells, scenario_path.as_ref())
+    axes.finish(cells, scenario_path)
+}
+
+/// Read candidate family labels in study candidate order. The metadata uses
+/// `candidate,family` or `candidate,topology`. Repeated entries must agree.
+/// Each study candidate needs a label. Extra candidates are allowed.
+pub fn load_families(path: impl AsRef<Path>, candidates: &[String]) -> Result<Vec<String>, Error> {
+    let csv = Csv::read(path.as_ref())?;
+    let [candidate] = csv.fields(["candidate"])?;
+    let family = csv
+        .field("family")
+        .or_else(|| csv.field("topology"))
+        .ok_or_else(|| invalid("missing CSV header \"family\" or \"topology\""))?;
+    let mut labels = HashMap::new();
+    for row in &csv.rows {
+        let id = row.fields[candidate].as_str();
+        let label = row.fields[family].as_str();
+        if id.trim().is_empty() || label.trim().is_empty() {
+            return Err(row.error("candidate and family must be non-empty"));
+        }
+        if labels
+            .insert(id, label)
+            .is_some_and(|previous| previous != label)
+        {
+            return Err(row.error(format!("candidate {id:?} has conflicting family labels")));
+        }
+    }
+    candidates
+        .iter()
+        .map(|id| {
+            labels
+                .get(id.as_str())
+                .map(|label| (*label).to_owned())
+                .ok_or_else(|| invalid(format!("missing family for candidate {id:?}")))
+        })
+        .collect()
 }
 
 /// Read the terminal distribution in each cell and derive its service moments.
@@ -383,9 +477,9 @@ impl Row {
 
     fn flag(&self, column: usize) -> Result<bool, Error> {
         match self.fields[column].as_str() {
-            "0" => Ok(false),
-            "1" => Ok(true),
-            other => Err(self.error(format!("expected 0 or 1, got {other:?}"))),
+            "0" | "false" => Ok(false),
+            "1" | "true" => Ok(true),
+            other => Err(self.error(format!("expected 0, 1, false or true, got {other:?}"))),
         }
     }
 }
@@ -449,12 +543,14 @@ impl Csv {
         let mut columns = [0; N];
         for (column, name) in columns.iter_mut().zip(headers) {
             *column = self
-                .header
-                .iter()
-                .position(|field| field == name)
+                .field(name)
                 .ok_or_else(|| invalid(format!("missing CSV header {name:?}")))?;
         }
         Ok(columns)
+    }
+
+    fn field(&self, name: &str) -> Option<usize> {
+        self.header.iter().position(|field| field == name)
     }
 }
 
