@@ -47,6 +47,7 @@ jobs:
           python reproducibility/verify_exact_example.py
           python reproducibility/refine_selection.py
           python reproducibility/fractional_check.py
+          python reproducibility/joint_failure_frontier.py --check
       - name: Build and check paper
         run: bash paper/check-paper.sh
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

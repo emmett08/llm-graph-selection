@@ -11,6 +11,7 @@ python simulate_workflows.py
 python verify_exact_example.py
 python refine_selection.py
 python fractional_check.py
+python joint_failure_frontier.py --check
 ```
 
 The main sample contains outcome counts equivalent to 20,000 independent synthetic trials per cell. A cell represents one workflow for one task group in one scenario. The four immediate-rejection cells have known coefficients. The confidence bounds cover the other 216 cells, whose counts represent 4.32 million trials.
@@ -21,7 +22,7 @@ A typical run takes a few seconds, overwriting the generated data here before up
 Reproduction should recover the objective values from matching coefficients under the specified seeds. Environment-dependent solver tie-breaking can alter the chosen optimiser. PDF metadata can also vary.
 
 `simulation-method.md` explains the conclusions supported by the simulation rules. The executable source is the complete specification.
-Each data figure comes from a source CSV. Reuse formats include a vector PDF alongside a 220-dpi PNG.
+Each data figure comes from a source CSV. The joint-failure comparison writes include-ready TikZ. The earlier data figures include vector PDFs and 220-dpi PNGs for reuse.
 
 | File | Contents |
 |---|---|
@@ -31,7 +32,8 @@ Each data figure comes from a source CSV. Reuse formats include a vector PDF alo
 | `population-moments.csv` | Population coefficients for 220 cells, including finite cost caps |
 | `calibration-counts.csv` | Nonzero multinomial counts for the main sample. Join to `finite-outcomes.csv` on (group, candidate, scenario, outcome). |
 | `calibration-moments.csv` | Primary sample estimates with simultaneous one-sided bounds |
-| `frontier.csv` | Objective values at each sampled defect threshold, including explicit feasibility flags |
+| `frontier.csv` | Objective values at each sampled conditional-defect threshold, including feasibility flags |
+| `joint_failure_frontier.csv` | Minimum cost and highest scenario failure rate at each ceiling for the four routing and configuration comparisons |
 | `routing-plot-data.csv` | Nonzero weights of the exact full-pool solution |
 | `calibration-size.csv` | Population outcomes for feasible rules selected from one separately seeded draw per sample size |
 | `search-trace.csv` | Restricted-pool objective at each solve, identifying any added candidate with its reduced cost |
@@ -62,7 +64,7 @@ The recorded optimum is USD 0.0387983383 per attempted task in the adverse scena
 | Fraction of attempts exceeding the deadline | 0.15 |
 
 The single-call pool is infeasible at these requirements under the specified response laws.
-The 80% minimum acceptance rate applies across each scenario, with every original attempt in the denominator. Acceptance means the workflow releases a result under the service's terminal rule. In a release-note service, the corresponding requirement is a minimum publication rate. Within the migration group, the selected rule immediately rejects 30.39% of attempts.
+The 80% minimum acceptance rate applies across each scenario, with every original attempt in the denominator. Acceptance means the workflow releases a result under the service's terminal rule. Within the higher-difficulty group, archived under `migration`, the selected rule immediately rejects 30.39% of attempts.
 The baseline includes late outputs in acceptance. The joint on-time and defect-free outcome counts attempts that result in an accepted output by the deadline without a material defect. Its denominator also includes all attempts.
 The simulator supplies the true group to the router and assigns zero infrastructure cost to routing and orchestration. In an operational study, a classifier supplies the observed routing group. Independent task labels are needed to assess service for the true groups.
 
@@ -77,3 +79,9 @@ The population sensitivity analyses remove the immediate-rejection option and re
 The serial review sensitivity changes the defect probability after a flagged draft completes repair. Outside the shared blind-spot state, the alternative assigns a 50% probability that a detected defect persists. When the initial review falsely flags a sound draft, it adds a 20% chance of introducing a defect conditional on the baseline repair producing a sound result. The alternative is a synthetic test of the routing decision. A live study would need independently adjudicated draft and repair outcomes to estimate these probabilities.
 
 Run `python fractional_check.py` to check bisection's agreement with the Charnes–Cooper LP result on the appendix's adverse scenario. Exact rational arithmetic supplies a matching lower bound at the optimum.
+
+## All-task failure and topology limits
+
+Run `python joint_failure_frontier.py` to regenerate `joint_failure_frontier.csv` and `../figures/joint-failure-frontier.tikz.tex`. The script scores each enumerated terminal outcome with `F = 1 - (A - Y) * (1 - L)`. It retains the original service limits and solves the problem at each declared failure ceiling. For a given minimum cost, it computes the lowest worst-scenario failure rate. Use `--check` to verify the archived outputs and the two-sided cost-gap example. Use `--failure-cap .30` to print the four comparisons at a single ceiling.
+
+The one-family and fixed-configuration comparisons use the same candidates as routing without immediate rejection. A routing rule restricted to one family can use different model or request settings within that family. A single fixed configuration handles every task with the same graph and settings. The figure plots the minimum costs for routing at the sampled ceilings. It derives the step for a fixed configuration by checking every candidate directly. The inputs describe a synthetic workload with assigned outcome probabilities.

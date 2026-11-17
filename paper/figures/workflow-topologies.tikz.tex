@@ -1,127 +1,145 @@
 % Required packages: tikz
-% Required TikZ libraries: arrows.meta, graphs
+% Required TikZ libraries: arrows.meta
 % Target width: 160 mm maximum
 % Minimum text size: 8 pt
 % Colour/greyscale intent: colour and greyscale
-% Directed edge shafts: 0.75 pt
-% Dark blue bold text identifies an LLM call, redundantly with its operation name.
-% Every arrow links two operations or a workflow boundary. The panel geometry
-% describes adjacency and branching. Vertical gaps do not represent elapsed time.
+% Edge shafts: 0.7 pt
+% Bold type redundantly identifies model calls.
+% Positions mark connectivity. Distances do not represent time.
 \begin{tikzpicture}[
   x=1mm,y=1mm,
   title/.style={font=\fontsize{9.5}{11}\selectfont\bfseries,inner sep=0pt},
-  vertex/.style={font=\fontsize{8.5}{10}\selectfont,inner xsep=2pt,inner ysep=2pt,align=center},
+  vertex/.style={font=\fontsize{8.5}{10}\selectfont,inner xsep=1.7pt,inner ysep=1.8pt,align=center},
   llm/.style={vertex,font=\fontsize{8.5}{10}\selectfont\bfseries,text=blue!45!black},
   condition/.style={font=\fontsize{8}{9}\selectfont\itshape,inner sep=1pt},
-  every edge/.style={draw=black!75,line width=.75pt,>={Stealth[length=4.8pt,width=3.4pt]}},
+  flow/.style={->,draw=black!75,line width=.7pt,>={Stealth[length=4.5pt,width=3.2pt]}},
+  exchange/.style={flow,<->},
 ]
-\path[use as bounding box] (0,-151) rectangle (156,3);
+\path[use as bounding box] (0,-164) rectangle (156,3);
 
-% All panels start at the top. Each compares structure at the same physical size.
 \begin{scope}[xshift=26mm]
   \node[title] at (0,0) {(a) Single call};
   \node[vertex] (atask) at (0,-8) {Task};
   \node[llm] (adraft) at (0,-26) {Draft};
-  \node[vertex] (aresult) at (0,-43) {Result};
-  \graph[use existing nodes] {atask -> adraft -> aresult;};
+  \node[vertex] (aresult) at (0,-44) {Result};
+  \draw[flow] (atask) -- (adraft);
+  \draw[flow] (adraft) -- (aresult);
 \end{scope}
 
 \begin{scope}[xshift=78mm]
-  \node[title] at (0,0) {(b) Serial review};
-  \node[vertex] (btask) at (0,-8) {Task};
-  \node[llm] (bdraft) at (0,-19) {Draft};
-  \node[llm] (breview) at (0,-32) {Review};
-  \node[vertex] (bresult) at (0,-43) {Result};
-  \graph[use existing nodes] {btask -> bdraft -> breview -> bresult;};
+  \node[title] at (0,0) {(b) Single-agent loop};
+  \node[vertex] (btask) at (-11,-8) {Task};
+  \node[llm] (bagent) at (-11,-25) {Agent\\\textnormal{May self-review}};
+  \node[vertex] (btool) at (16,-25) {Tool};
+  \node[vertex] (bfinish) at (-11,-46) {Finish or stop};
+  \draw[flow] (btask) -- (bagent);
+  \draw[flow] (bagent.east) to[bend left=37] node[condition,above] {act} (btool.west);
+  \draw[flow] (btool.west) to[bend left=37] node[condition,below] {observe} (bagent.east);
+  \draw[flow] (bagent) -- node[condition,right] {done or cap} (bfinish);
 \end{scope}
 
 \begin{scope}[xshift=130mm]
-  \node[title] at (0,0) {(c) One repair};
-  \node[vertex] (ctask) at (-12,-8) {Task};
-  \node[llm] (cdraft) at (-12,-17) {Draft};
-  \node[llm] (creview) at (-12,-26) {Review};
-  \node[llm] (crepair) at (13,-26) {Repair};
-  \node[llm] (crecheck) at (13,-35) {Recheck};
-  \node[vertex] (cresult) at (-12,-43) {Result};
-  \graph[use existing nodes] {
-    ctask -> cdraft -> creview;
-    creview ->[edge node={node[condition,left] {clear}}] cresult;
-    creview ->[edge node={node[condition,above] {flag}}] crepair -> crecheck -> cresult;
-  };
+  \node[title] at (0,0) {(c) Sequential pipeline};
+  \node[vertex] (ctask) at (-9,-8) {Task};
+  \node[llm] (cdraft) at (-9,-17) {Draft};
+  \node[vertex] (cvalidate) at (-9,-26) {Validate};
+  \node[vertex] (cstop) at (15,-26) {Stop};
+  \node[llm] (cformat) at (-9,-37) {Format};
+  \node[vertex] (cresult) at (-9,-46) {Result};
+  \draw[flow] (ctask) -- (cdraft);
+  \draw[flow] (cdraft) -- (cvalidate);
+  \draw[flow] (cvalidate) -- node[condition,above] {fail} (cstop);
+  \draw[flow] (cvalidate) -- node[condition,right] {pass} (cformat);
+  \draw[flow] (cformat) -- (cresult);
 \end{scope}
 
-\begin{scope}[xshift=26mm,yshift=-51mm]
-  \node[title] at (0,0) {(d) Parallel drafts};
+\begin{scope}[xshift=26mm,yshift=-55mm]
+  \node[title] at (0,0) {(d) Routing};
   \node[vertex] (dtask) at (0,-8) {Task};
-  \node[llm] (ddrafta) at (-13,-21) {Draft A};
-  \node[llm] (ddraftb) at (13,-21) {Draft B};
-  \node[llm] (dmerge) at (0,-33) {Merge + check};
-  \node[vertex] (dresult) at (0,-43) {Result};
-  \graph[use existing nodes] {dtask -> {ddrafta,ddraftb} -> dmerge -> dresult;};
+  \node[vertex] (droute) at (0,-18) {Classify};
+  \node[llm] (dspeca) at (-13,-33) {Specialist A};
+  \node[llm] (dspecb) at (13,-33) {Specialist B};
+  \node[vertex] (dresult) at (0,-46) {Result};
+  \draw[flow] (dtask) -- (droute);
+  \draw[flow] (droute) -- node[condition,left,xshift=-2.5pt] {type A} (dspeca);
+  \draw[flow] (droute) -- node[condition,right,xshift=2.5pt] {type B} (dspecb);
+  \draw[flow] (dspeca) -- (dresult);
+  \draw[flow] (dspecb) -- (dresult);
 \end{scope}
 
-\begin{scope}[xshift=78mm,yshift=-51mm]
-  \node[title] at (0,0) {(e) Parallel reviews};
+\begin{scope}[xshift=78mm,yshift=-55mm]
+  \node[title] at (0,0) {(e) Parallel fan-out};
   \node[vertex] (etask) at (0,-8) {Task};
-  \node[llm] (edraft) at (0,-16.5) {Draft};
-  \node[llm] (ereviewa) at (-13,-25) {Review A};
-  \node[llm] (ereviewb) at (13,-25) {Review B};
-  \node[llm] (eadjudicate) at (0,-34.5) {Adjudicate};
-  \node[vertex] (eresult) at (0,-43) {Result};
-  \graph[use existing nodes] {etask -> edraft -> {ereviewa,ereviewb} -> eadjudicate -> eresult;};
+  \node[llm] (edrafta) at (-13,-21) {Draft A};
+  \node[llm] (edraftb) at (13,-21) {Draft B};
+  \node[llm] (emerge) at (0,-34) {Merge + check};
+  \node[vertex] (eresult) at (0,-46) {Accept or reject};
+  \draw[flow] (etask) -- (edrafta);
+  \draw[flow] (etask) -- (edraftb);
+  \draw[flow] (edrafta) -- (emerge);
+  \draw[flow] (edraftb) -- (emerge);
+  \draw[flow] (emerge) -- (eresult);
 \end{scope}
 
-\begin{scope}[xshift=130mm,yshift=-51mm]
-  \node[title] at (0,0) {(f) Specialist routing};
-  \node[vertex] (ftask) at (0,-8) {Task};
-  \node[vertex] (frule) at (0,-16.5) {Routing rule};
-  \node[llm] (froutine) at (-13,-27) {Generalist};
-  \node[llm] (fspecialist) at (13,-27) {Specialist};
-  \node[llm] (freview) at (13,-35) {Review};
-  \node[vertex] (fresult) at (0,-43) {Result};
-  \graph[use existing nodes] {
-    ftask -> frule;
-    frule ->[edge node={node[condition,left,xshift=-5.5pt] {routine}}] froutine -> fresult;
-    frule ->[edge node={node[condition,right,xshift=5.5pt] {specialist}}] fspecialist -> freview -> fresult;
-  };
+\begin{scope}[xshift=130mm,yshift=-55mm]
+  \node[title] at (0,0) {(f) Evaluator--optimiser loop};
+  \node[vertex] (ftask) at (-14,-8) {Task};
+  \node[vertex] (frubric) at (13,-8) {Rubric};
+  \node[llm] (fdraft) at (-14,-24) {Draft};
+  \node[llm] (fevaluate) at (13,-24) {Evaluate};
+  \node[vertex] (ffinish) at (13,-46) {Accept or stop};
+  \draw[flow] (ftask) -- (fdraft);
+  \draw[flow] (frubric) -- (fevaluate);
+  \draw[flow] (fdraft.east) to[bend left=37] node[condition,above] {draft} (fevaluate.west);
+  \draw[flow] (fevaluate.west) to[bend left=37] node[condition,below] {revise} (fdraft.east);
+  \draw[flow] (fevaluate) -- node[condition,left] {pass or cap} (ffinish);
 \end{scope}
 
-\begin{scope}[xshift=26mm,yshift=-102mm]
-  \node[title] at (0,0) {(g) Supervisor delegation};
-  \node[llm] (gdispatch) at (0,-9) {Supervisor\\\textnormal{Selects workers}};
-  \node[llm] (gworkera) at (-14,-23) {Worker A};
-  \node[llm] (gworkerb) at (14,-23) {Worker B};
-  \node[llm] (gcollect) at (0,-35) {Supervisor\\\textnormal{Combines results}};
-  \node[vertex] (gresult) at (0,-47) {Result};
-  \graph[use existing nodes] {gdispatch -> {gworkera,gworkerb} -> gcollect -> gresult;};
+\begin{scope}[xshift=26mm,yshift=-110mm]
+  \node[title] at (0,0) {(g) Orchestrator--worker};
+  \node[vertex] (gtask) at (0,-7) {Task};
+  \node[llm] (gdispatch) at (0,-17) {Orchestrator\\\textnormal{Chooses subtasks}};
+  \node[llm] (gworkera) at (-14,-30) {Worker A};
+  \node[llm] (gworkerb) at (14,-30) {Worker B};
+  \node[llm] (gcollect) at (0,-42) {Orchestrator\\\textnormal{Synthesises results}};
+  \node[vertex] (gresult) at (0,-52) {Result};
+  \draw[flow] (gtask) -- (gdispatch);
+  \draw[flow] (gdispatch) -- (gworkera);
+  \draw[flow] (gdispatch) -- (gworkerb);
+  \draw[flow] (gworkera) -- (gcollect);
+  \draw[flow] (gworkerb) -- (gcollect);
+  \draw[flow] (gcollect) -- (gresult);
 \end{scope}
 
-\begin{scope}[xshift=78mm,yshift=-102mm]
-  \node[title] at (0,0) {(h) Stateful handoff};
-  \node[llm] (hintake) at (0,-9) {Intake agent};
-  \node[llm] (hmigrate) at (-11,-27) {Migration\\specialist};
-  \node[vertex] (hresult) at (0,-47) {Result};
-  \graph[use existing nodes] {
-    hintake ->[edge node={node[condition,left,xshift=-1mm] {state + control}}] hmigrate -> hresult;
-    hintake ->[bend left=44, edge node={node[condition,right] {ready}}] hresult;
-  };
+\begin{scope}[xshift=78mm,yshift=-110mm]
+  \node[title] at (0,0) {(h) Decentralised debate};
+  \node[vertex] (htask) at (0,-8) {Task};
+  \node[llm] (hpeera) at (-14,-21) {Peer A};
+  \node[llm] (hpeerb) at (14,-21) {Peer B};
+  \node[vertex] (hstate) at (0,-35) {Shared notes};
+  \node[vertex] (hfinish) at (0,-52) {Agreement or stop};
+  \draw[flow] (htask) -- (hpeera);
+  \draw[flow] (htask) -- (hpeerb);
+  \draw[exchange] (hpeera) -- (hstate);
+  \draw[exchange] (hpeerb) -- (hstate);
+  \draw[flow] (hstate) -- node[condition,right] {agree or cap} (hfinish);
 \end{scope}
 
-\begin{scope}[xshift=130mm,yshift=-102mm]
-  \node[title] at (0,0) {(i) Bounded peer exchange};
-  \node[condition] at (0,-10) {Round 1};
-  \node[llm] (iaone) at (-15,-10) {Peer A};
-  \node[llm] (ibone) at (15,-10) {Peer B};
-  \node[condition] at (0,-29) {Round 2};
-  \node[llm] (iatwo) at (-15,-29) {Peer A};
-  \node[llm] (ibtwo) at (15,-29) {Peer B};
-  \node[vertex] (iresult) at (0,-47) {Agree or reject};
-  \graph[use existing nodes] {
-    iaone -> ibtwo;
-    ibone -> iatwo;
-    iaone ->[dashed] iatwo;
-    ibone ->[dashed] ibtwo;
-    {iatwo,ibtwo} -> iresult;
-  };
+\begin{scope}[xshift=130mm,yshift=-110mm]
+  \node[title] at (0,0) {(i) Review with one repair};
+  \node[vertex] (itask) at (-11,-8) {Task};
+  \node[llm] (idraft) at (-11,-17) {Draft};
+  \node[llm] (ireview) at (-11,-26) {Review};
+  \node[llm] (irepair) at (14,-26) {Repair};
+  \node[llm] (irecheck) at (14,-38) {Recheck};
+  \node[vertex] (iaccept) at (-11,-52) {Accept};
+  \node[vertex] (ireject) at (14,-52) {Reject};
+  \draw[flow] (itask) -- (idraft);
+  \draw[flow] (idraft) -- (ireview);
+  \draw[flow] (ireview) -- node[condition,left] {clear} (iaccept);
+  \draw[flow] (ireview) -- node[condition,above] {flag} (irepair);
+  \draw[flow] (irepair) -- (irecheck);
+  \draw[flow] (irecheck) -- node[condition,below,xshift=3pt,yshift=-3.5pt] {clear} (iaccept);
+  \draw[flow] (irecheck) -- node[condition,right] {flag} (ireject);
 \end{scope}
 \end{tikzpicture}

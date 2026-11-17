@@ -1,8 +1,9 @@
-\caption{Bold labels identify model calls. Conditions beside arrows determine
-which path execution follows. Calls on parallel paths can run concurrently.
-The supervisor in (g) has selected every worker shown.
-Intake requests specialist review through the handoff in (h).
-Crossing arrows in (i) carry peer messages into the next round, where dashed
-arrows preserve local state. The deterministic check accepts exactly when the
-results match.
-The single call in (a) provides a simulation baseline. The simulator also evaluates serial review in (c) and parallel drafts in (d).}
+\caption{Seven agentic coordination patterns in (b)--(h) and two reference
+configurations in (a) and (i). Bold labels identify model calls. Arrows show
+execution order or information transfer. Conditions beside an arrow state
+when execution follows that path. A cap ends repeated calls at the workflow's
+budget or round limit. In (h), peers read and write shared notes, as shown by
+the two-headed arrows. They use the same rule to determine when they agree
+and when to stop. Branches in (e) can run concurrently. Diagram spacing
+carries no timing information. The simulator uses the call structures in
+(a), (e) and (i).}

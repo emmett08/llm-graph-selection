@@ -16,7 +16,7 @@ The pool combines three models with three graph families. Sweeping three effort 
 
 Every call within a configured graph uses the same model and request settings. The general model supports settings that vary by node. A broader experiment could vary those settings and test changes to prompts or to which calls see the source evidence.
 
-The router observes task group g under the mapping `{0: routine, 1: migration}`. The simulator makes the observed label equal to the true task group and assigns zero cost to routing and orchestration. In a deployment, the classifier can supply a different observed group. Evaluating service within true groups then requires independently labelled tasks and outcome estimates for the joint combinations of observed and true group.
+The router observes either the routine group (0) or the higher-difficulty group (1, archived as `migration`). The simulator makes the observed label equal to the true task group and assigns zero cost to routing and orchestration. In a deployment, the classifier can supply a different observed group. Evaluating service within true groups then requires independently labelled tasks and outcome estimates for the joint combinations of observed and true group.
 Scenario k defines operating conditions for a specified task distribution.
 
 | Scenario k | Conditions | Routine proportion | Migration proportion |
@@ -158,7 +158,7 @@ Unplotted grid points are infeasible. Locating the feasibility threshold between
 | Lower single-call defect rates | Multiply the joint defective-acceptance coefficient by 0.75 in every single-call cell. Keep acceptance, cost, lateness and all multicall coefficients fixed. |
 | Change the serial repair outcome | Outside a shared blind spot, make the probability of a defect after repair depend on whether the first review detected a defect or falsely flagged a sound draft. Apply the final review under the original rules. |
 | Remove immediate rejection | Exclude the zero-outcome candidate. Other workflows retain their original acceptance and rejection rules. |
-| Shift the adverse task mix | Vary the adverse migration share between 0.59 and 0.61 with complementary routine shares and fixed per-group outcome coefficients. Keep the nominal scenario as specified above. |
+| Shift the adverse task mix | Vary the adverse higher-difficulty share between 0.59 and 0.61 with complementary routine shares and fixed per-group outcome coefficients. Keep the nominal scenario as specified above. |
 | Change the service scope | Apply the service limits within each represented task group, require acceptance by the deadline, or combine those requirements. Calculate on-time outcomes from the joint terminal distributions. |
 
 For completed repairs in the serial comparison, let r=0.65p, the baseline repair defect probability when B=0. If the initial draft has a detected defect, the repair retains it with probability 0.50. If the repair removes it, a new defect occurs with probability r. The revised draft therefore has a material defect with probability 0.50+0.50r. If the review falsely flags a sound draft, the repair introduces a defect with probability r and adds a 0.20 probability of introducing a defect conditional on the baseline repair producing a sound result. The resulting probability is r+(1−r)×0.20. A shared blind spot still makes the revised draft defective. The first and final review probabilities, call costs and durations follow the original rules. These probabilities are inputs to a synthetic comparison.
@@ -167,4 +167,10 @@ For completed repairs in the serial comparison, let r=0.65p, the baseline repair
 
 The simulator derives outcome coefficients from complete workflows under shared conditions. These coefficients account for conditional execution through repair paths, including rejection at a token cap. Duration calculations include parallel work.
 Using conservative confidence bounds restricts the feasible set and can increase the minimum cost. A small sample can produce bounds too wide for any routing rule to meet all the constraints.
-The numerical optimum applies to these 55 candidates with the simulator's defect probabilities, token counts and call durations. Deployment conclusions require measured workflow outcomes under the intended load. A proposed search policy needs assessment on held-out workloads under an explicit evaluation budget, including when it uses provider advice through a predictor.
+The numerical optimum applies to these 55 candidates with the simulator's defect probabilities, token counts and call durations. Deployment conclusions require measured workflow outcomes under the intended load. Evaluate any proposed configuration search on held-out workloads under a declared evaluation budget, including search guided by predictions that use provider advice.
+
+## End-to-end failure
+
+`joint_failure_frontier.py` keeps the original limits and varies the failure ceiling for all submitted tasks. A task succeeds when the workflow delivers a defect-free accepted result by the deadline. The script evaluates `F = 1 - (A - Y) * (1 - L)` for each terminal outcome, including rejection and truncation. It compares unrestricted routing with routing that excludes immediate rejection. The one-family and fixed-configuration cases use that latter set of candidates.
+
+The two-sided calibration check uses the original draw of 20,000 trials per cell. It scores failure on those same terminal draws and covers all five means in each of 216 uncertain cells. It compares the optimistic, exact and conservative optima at a 30% failure ceiling and checks the difference between population feasibility and a supported recommendation at 19%. These checks use assigned laws and one sample.

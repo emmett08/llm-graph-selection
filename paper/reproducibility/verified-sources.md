@@ -65,19 +65,17 @@ The 4,096/8,192 caps are study design choices inside supported limits. Provider 
 | `charnesCooper` | [Wiley article, DOI 10.1002/nav.3800090303](https://onlinelibrary.wiley.com/doi/10.1002/nav.3800090303) and [Boyd and Vandenberghe, §4.3.2](https://www.stanford.edu/~boyd/cvxbook/bv_cvxbook.pdf) | Single-denominator linear-fractional transformation. The textbook supplies the proof and conditions. |
 | `maurerPontil` | [Author paper, Theorem 4 and Corollary 5](https://arxiv.org/pdf/0907.3740) | One-sided bound for independent, identically distributed scores in a unit interval. Shifting the paired score to this interval preserves its variance. |
 
-## Sources added for the release-note study
+## Workflow search sources
 
 | BibTeX key | Primary evidence checked on 15 November 2026 | Use |
 | --- | --- | --- |
-| `e2explainer2026` | [Li et al., arXiv:2608.12921v2](https://arxiv.org/html/2608.12921v2). See Edge-Level Granger-Style Causal Attribution, Appendix A's Scope of the causal attribution and Table 7. | Masking one message estimates its contribution with the other edges available. Complete subgraph executions assess combined removals. Table 7 reports a 5.27% reduction in weighted tokens after removing 75% of active edges and retaining every agent. Its accounting excludes development interventions and explainer costs. The release-note study will measure billed execution costs and account for search separately. |
+| `e2explainer2026` | [Li et al., arXiv:2608.12921v2](https://arxiv.org/html/2608.12921v2). See Edge-Level Granger-Style Causal Attribution, Appendix A's Scope of the causal attribution and Table 7. | Masking one message estimates its contribution with the other edges available. Complete subgraph executions assess combined removals. Table 7 reports a 5.27% reduction in weighted tokens after removing 75% of active edges and retaining every agent. Its accounting excludes development interventions and explainer costs. The triage study would measure billed execution costs and account for search separately. |
 | `metagen2026` | [Wang et al., arXiv:2601.19290v1](https://arxiv.org/html/2601.19290v1). See §3.3 and Algorithm 1 for the two update mechanisms, and §4.5, Table 4, for the ablation. | The within-task ablation disables changes to prompts and graph structure together. The proposed routing comparison holds roles and prompts fixed. MetaGen also updates selection weights and a role cache across tasks. This state persists across executions and changes the assumptions required for calibration. |
 
 ## Workload and topology sources checked on 15 November 2026
 
 | BibTeX key | Evidence location | Use |
 | --- | --- | --- |
-| `releaseNotesPractice2022` | [Bi et al., IEEE TSE, DOI 10.1109/TSE.2020.3038881](https://doi.org/10.1109/TSE.2020.3038881). [Author abstract hosted by Microsoft Research](https://www.microsoft.com/en-us/research/publication/an-empirical-study-of-release-note-production-and-usage-in-practice/). | Reports differences between stakeholder expectations. This supports fixing the audience before assessing omissions. |
-| `releaseeval2026` | [Meng et al., ACL Anthology](https://aclanthology.org/2026.findings-aacl.128/), abstract and benchmark construction. | Links published notes to commits, commit trees and diffs. These records can supply candidate tasks. The proposed study derives its required migration instructions from source evidence and measures its own service outcomes. |
 | `runkleArchitectures2026` | [LangChain architecture guide](https://www.langchain.com/blog/choosing-the-right-multi-agent-architecture), Subagents, Handoffs and Router. | Describes who controls execution and whether work returns to the caller or passes to the next active agent. |
 | `agentPatternsTopology` | [AgentPatterns.ai taxonomy](https://agentpatterns.ai/patterns/multi-agent/multi-agent-topology-taxonomy/), The three topologies and Choose a coordination pattern. | Distinguishes centralised, peer and hybrid coordination from the order in which work proceeds. |
 | `huangTopologies2026` | [Ken Huang's guide](https://kenhuangus.substack.com/p/multi-agent-design-patterns-architectural), public taxonomy, supervisor example and architecture matrix. | Describes nested supervisors and asynchronous event buses as architecture choices. The detailed sections after the public preview were unavailable. |
@@ -91,4 +89,24 @@ The 4,096/8,192 caps are study design choices inside supported limits. Provider 
 | `dhuliawala2024cove` | [Dhuliawala et al., Findings of ACL 2024, pp. 3563–3578](https://aclanthology.org/2024.findings-acl.212/), [§§3.3 and 4.3, Table 1](https://aclanthology.org/2024.findings-acl.212.pdf). | The factored verification prompts exclude the original answer. Precision improved on the two list tasks relative to joint verification, supporting the authors' explanation that separating the contexts limits repetition of the original answer's hallucinations. |
 | `gong2026upstream` | [Gong et al., arXiv:2609.36855](https://arxiv.org/abs/2609.36855), §§2.1, 3.3–3.4 and Appendix A. | This preprint compares no upstream message, the original message and a message with its conclusion reversed while holding the downstream task and evidence fixed. In 77 of 82 audited correct-to-incorrect transitions, the receiver adopted the specific wrong answer in the upstream message. The finding motivates a controlled handoff comparison. |
 
-These studies motivate measuring propagation and correction in the release-note workflow. The simulator uses its own probabilities.
+These studies motivate measuring propagation and correction during triage. The simulator uses its own probabilities.
+
+## Triage and decision sources checked on 17 November 2026
+
+| BibTeX key | Evidence location | Use |
+| --- | --- | --- |
+| `sreTroubleshooting2016` | [Site Reliability Engineering](https://sre.google/sre-book/effective-troubleshooting/), Triage and Inspect. | Grounds the on-call decision and the use of operational evidence. |
+| `kubernetesTroubleshootingApplications` | [Kubernetes documentation](https://kubernetes.io/docs/tasks/debug/debug-application/). | Identifies the application resources covered by Kubernetes troubleshooting. |
+| `phamRcaEval2025` | [ACM WWW Companion paper](https://doi.org/10.1145/3701716.3715290) and [benchmark repository](https://github.com/phamquiluan/RCAEval). | Supplies controlled cases with annotated root causes and telemetry for replay. |
+| `chenAiOpsLab2025` | [MLSys proceedings](https://proceedings.mlsys.org/paper_files/paper/2025/hash/d1f9e4a9f109b6e8b75ed362736f22ec-Abstract-Conference.html). | Supplies a controlled environment with faults, workloads and telemetry. |
+| `sreCanarying2018` | [Site Reliability Workbook](https://sre.google/workbook/canarying-releases/), Requirements on Monitoring Data. | Supports the example of a decision comparing canary signals with a control. |
+| `mavrotas2009` | [Applied Mathematics and Computation](https://doi.org/10.1016/j.amc.2009.03.037). | Attributes the use of a ceiling on one objective while minimising another. |
+
+## Agentic workflow patterns checked on 17 November 2026
+
+| BibTeX key | Evidence location | Use |
+| --- | --- | --- |
+| `anthropicEffectiveAgents2024` | [Anthropic Engineering](https://www.anthropic.com/research/building-effective-agents), workflow patterns. | Describes fixed chaining with gates, routing, preassigned parallel work, runtime delegation and evaluation with feedback. |
+| `yaoReact2023` | [ICLR 2023 camera-ready paper](https://arxiv.org/abs/2210.03629v3), abstract and Sections 2–3. | Describes interleaved reasoning, action and observations in a tool-using loop. |
+| `shinnReflexion2023` | [NeurIPS 2023 proceedings](https://proceedings.neurips.cc/paper_files/paper/2023/hash/1b44b878bb782e6954cd888628510e90-Abstract-Conference.html), abstract and Section 3 of the paper. | Describes verbal feedback stored in episodic memory across trials. |
+| `duDebate2024` | [ICML 2024 proceedings](https://proceedings.mlr.press/v235/du24e.html), abstract and Section 4 of the paper. | Describes agents exchanging prior responses over multiple rounds. Panel (h) gives a shared-state implementation with its own stopping rule. |
