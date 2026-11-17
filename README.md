@@ -1,6 +1,6 @@
 # LLM Workflow Optimiser
 
-A Rust implementation of Emmett Miller's [*Selecting LLM workflow configurations under service constraints*](paper/llm-graph-selection-paper.pdf), revised 15 November 2026. The library includes a command-line interface.
+Emmett Miller's [*Choosing LLM workflow topologies under cost and failure constraints*](paper/llm-graph-selection-paper.pdf) compares fixed workflows and routing mixtures using end-to-end failure. The Python experiment reproduces that comparison. The Rust library and its command-line interface implement the paper's conditional-defect routing programme.
 
 For each task group, the optimiser chooses the probability of selecting each complete workflow. It uses the same routing probabilities in every operating scenario.
 The fixed input determines which outcome the optimiser minimises.
