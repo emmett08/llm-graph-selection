@@ -16,7 +16,7 @@
 \renewcommand{\floatpagefraction}{0.75}
 \setcounter{topnumber}{3}
 \usepackage[hidelinks]{hyperref}
-\hypersetup{pdftitle={Selecting LLM workflow configurations under service constraints},pdfauthor={Emmett Miller}}
+\hypersetup{pdftitle={Choosing LLM workflow topologies under cost and failure constraints},pdfauthor={Emmett Miller}}
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -35,49 +35,48 @@
 \newcommand{\M}{\mathcal M}
 \DeclareMathOperator{\softmax}{softmax}
 \DeclareMathOperator{\argmin}{argmin}
-\title[Selecting LLM workflow configurations]{Selecting LLM workflow configurations under service constraints}
+\title[Choosing LLM workflow topologies]{Choosing LLM workflow topologies under cost and failure constraints}
 \author{Emmett Miller}
-\date{16 November 2026}
-\keywords{Large language models, workflow graphs, reasoning effort, linear programming, confidence bounds, column generation}
+\date{17 November 2026}
+\keywords{Large language models, workflow graphs, service failures, linear programming, confidence bounds, column generation}
 
 \begin{document}
 \begin{abstract}
-We choose routing probabilities for large language model (LLM) workflows to minimise the highest expected cost per attempt across operating scenarios, subject to service limits.
-A positive minimum acceptance rate gives the defect fraction a nonzero denominator, so the defect limit takes the form of a linear inequality. The programme finds the least-cost feasible mixture if each configuration's outcome probabilities and mean cost stay fixed within each task group and scenario as routing changes.
-Simultaneous bounds from representative held-out runs limit the probability of returning a rule that violates a population service limit under those conditions.
-With the simulator's assigned outcome probabilities, meeting the scenario-wide limits costs USD~0.0388 per attempt. Under that rule, 59.82\% of attempts in the adverse scenario yield an accepted result by the deadline without a material defect.
-Requiring on-time acceptance and enforcing the limits within each task group raises the simulated optimum to USD~0.0518 per attempt.
-The proposed release-note study would test whether direct access to the change description helps a reviewer correct a draft error.
+We choose large language model (LLM) workflows that meet a task failure ceiling at minimum cost. The model minimises the highest expected cost per submitted task across scenarios and compares a single topology with routing among topologies.
+When conditional outcome means stay fixed as routing weights change, the mixture problem is linear. Simultaneous bounds from held-out runs control the risk of returning a policy that violates a service limit and bound its possible excess cost.
+In a finite simulation, adding a 30\% all-task failure ceiling raises the minimum cost from USD~0.03880 to USD~0.04454 per attempt. The original policy fails on 40.18\% of attempts in its worst scenario.
+A proposed Kubernetes triage study would test the decision procedure and measure how telemetry access affects downstream use of a mistaken diagnosis.
 \end{abstract}
 \maketitle
 
 \section{The engineering decision}
-A team drafting release notes with an LLM must decide when a draft needs further review before publication.
-If the release requires a migration, an assessor can check the draft's instructions against the change records.
-Readers need different information about the same release, so the study specifies its intended readers before judging omissions~\cite{releaseNotesPractice2022}.
-ReleaseEval supplies candidate tasks by linking published notes to the underlying software changes~\cite{releaseeval2026}.
+An alert reports that a checkout service on Kubernetes has exceeded its latency target shortly after a deployment.
+The on-call engineer must establish the scope of the degradation and decide what to check next.
+A recent deployment offers one explanation. Request traces could locate the added latency in checkout or a shared dependency.
+The decision is whether to assign the alert to one tool-using agent, have a second agent review its findings, or collect evidence in parallel before combining the findings.
+Kubernetes documents application troubleshooting across resources such as Pods and Services. Site reliability engineering treats triage as a time-sensitive decision informed by metrics, logs and traces~\cite{sreTroubleshooting2016,kubernetesTroubleshootingApplications}.
 
-The team can vary the drafting model's reasoning effort and decide whether to add a reviewer who can read the original change description.
-Section~\ref{sec:discussion} proposes testing whether that access helps a reviewer correct a wrong migration instruction.
+In the proposed study the workflow reads telemetry and deployment records and delivers a triage brief or an accountable handoff.
+The brief specifies the affected service and scope, gives a supported hypothesis or states what remains uncertain, and names a check that could discriminate between explanations.
+The service owner sets the response deadline and specifies when a handoff or a finding of no incident satisfies the obligation.
+A missed alert, a material error in the disposition or a response after the deadline counts as failure.
+Measure cost and elapsed time from alert intake through disposition, including any required fallback.
 
-Measure service outcomes from the moment the task enters the workflow. If publication remains due after automated rejection, include the time and cost of any fallback before assigning a terminal outcome.
-For release notes, the acceptance rate is the share of submitted tasks that result in a published note. Other workflows count acceptance under their own release rules.
-Compute the fraction of published notes with a material defect. Use all submissions to calculate the lateness rate and mean cost.
-If tasks share a queue, check whether rerouting tasks alters service outcomes by changing the load.
+A workflow graph specifies which operations can run and which evidence each receives.
+GPTSwarm represents agents and their communication as a graph~\cite{gptswarm}.
+AFlow searches executable workflows that include request settings~\cite{aflow}.
+E2-Explainer masks individual communication channels to propose smaller graphs~\cite{e2explainer2026}.
+MetaGen uses feedback from intermediate executions to revise role prompts and communication~\cite{metagen2026}.
+Choices of model or graph can restrict later settings, a dependency supported by configuration methods such as SMAC3~\cite{smac3}.
+Section~\ref{sec:discussion} proposes testing whether direct access to telemetry helps a reviewer recover from a misleading upstream hypothesis.
 
-A graph specifies the information available to each possible operation.
-GPTSwarm represents operations as nodes connected by communication edges~\cite{gptswarm}.
-AFlow represents workflows as executable code. Its node definitions include request settings, with model choice and some other settings fixed in the implemented search~\cite{aflow}.
-Graph search can also change what a call can read. E2-Explainer masks individual communication channels to propose smaller executable graphs~\cite{e2explainer2026}.
-MetaGen uses feedback from intermediate executions to revise role prompts in a graph with edges that can be enabled or disabled~\cite{metagen2026}.
-An earlier choice can determine which settings are available. SMAC3 supports searches with this dependency~\cite{smac3}.
-
-Withholding drafts that would contain material defects can lower the measured defect fraction. A minimum publication rate limits how often the workflow can withhold a note.
-A routing mixture may meet both requirements at lower cost by sending some tasks to a cheaper workflow.
-We express this choice as a linear programme (LP) over the routing probabilities of complete workflow configurations~\cite{boyd}.
-When the candidate pool is large, column generation adds configurations to a restricted set using their reduced costs~\cite{dantzigwolfe}.
-As in Learn then Test~\cite{ltt}, the procedure returns a rule only if it meets the service limits under confidence bounds from fresh runs.
-Under the assumptions in Section~\ref{sec:calibration}, the probability of returning a rule that violates a population service limit is at most~$\alpha$.
+The model compares a declared set of policies the service could deploy.
+A policy specifies how the system uses the information available at intake to choose a workflow and how it handles escalation and shared resources.
+An engineer can choose the cheapest policy that meets a failure limit or seek the lowest failure rate within a budget.
+Varying the limit reveals the trade-off across operating scenarios.
+When conditional outcome means stay fixed as routing weights change, a linear programme (LP) can represent mixtures of these configurations~\cite{boyd}.
+Column generation can add configurations using their reduced costs~\cite{dantzigwolfe}.
+As in Learn then Test~\cite{ltt}, selecting from simultaneous bounds from fresh observations can control the chance of returning a policy that violates a service limit under the stated sampling and deployment assumptions.
 
 \section{Defining a workflow configuration}
 \label{sec:configuration}
@@ -90,7 +89,7 @@ A complete workflow configuration is
 \end{equation}
 Each node specifies a possible operation and its required inputs.
 An edge can carry a message when its guard holds. Its label $h_e$ specifies how to transform that message.
-Execution follows the schedule in $\rho$ until the stopping condition holds.
+The execution rules $\rho$ specify the guards, scheduling and stopping conditions.
 A finite acyclic graph can represent bounded retries.
 A configuration with a cycle is admissible if execution terminates almost surely with finite expected cost.
 
@@ -109,8 +108,8 @@ The choice of $r$ determines the compatible combinations $\mathcal H(m,r)$ of th
 If the endpoint has no adjustable reasoning control, represent it with one setting in $\mathcal R(m)$ and omit the control from requests.
 The setting $p_v$ specifies the call's prompt, including its assigned role.
 The node type identifies each non-LLM operation, such as a tool call or a deterministic check.
-When freezing a configuration, record the resolved defaults so the settings determine the provider request.
-Figure~\ref{fig:graph} shows call settings in a workflow that repairs a draft when the first review flags it.
+When freezing a configuration, record the resolved defaults and tool versions. Check that messages satisfy endpoint requirements across operations, including the ordering of tool results, before measuring the configuration.
+Figure~\ref{fig:graph} shows a workflow that repairs a first triage brief when a review flags a problem.
 
 A fixed graph with guarded edges can represent a controller that chooses among a bounded set of routes after seeing earlier results.
 For example, a failed evidence check can trigger a specialist review.
@@ -150,61 +149,60 @@ The router selects a configuration using the observed task group $G=g$, where $g
 The same routing rule applies in every scenario $k\in\{1,\ldots,K\}$. Each scenario fixes the operating conditions and the task distribution.
 Within a scenario, the known task-group proportions $\mu_{gk}$ satisfy $\mu_{gk}\ge0$, $\sum_g\mu_{gk}=1$.
 Any additional router input must be represented within the group definition, unless the configuration's execution rules already account for it.
-When a service requirement applies to actual migration tasks, let $H$ denote the service group established independently of the router's prediction.
+When a requirement applies to assessed incident severity, let $H$ denote the service group established independently of the router's prediction.
 
-An attempt counts as accepted ($A=1$) when the workflow releases an output under its terminal release rule. In the release-note study, an accepted result is a note that the workflow publishes in a live trial or would publish in an offline trial.
-Set $Y=1$ for an accepted output with a material defect, giving $Y\in\{0,1\}$ subject to $Y\le A$.
-Fix the defect criteria before evaluation. Labelling must be reliable independently of the workflow's verdict, unless a validated model accounts for labelling error.
-An attempt incurs total cost $C\ge0$ over elapsed time $T\ge0$.
-For deadline $d>0$, set the lateness indicator to $L=\mathbf1\{T>d\}$.
-If acceptance requires an on-time output, include that condition in $A$ before collecting observations.
-The mean of $(A-Y)(1-L)$ gives the share of submitted tasks that yield an accepted result by the deadline without a material defect.
+Score every eligible task from intake through its terminal outcome, including any required fallback. Let $F=1$ when the policy fails the task's service obligation, and set $F=0$ when it fulfils that obligation. For triage, the obligation can permit either a supported disposition or a timely handoff to an accountable responder.
+Decide which outcomes count before collecting observations. Use assessment independent of the workflow's verdict, or account for labelling error with a validated model.
+Measure elapsed time $T\ge0$ and total cost $C\ge0$ over the same interval. Include intake, tool charges and any operator effort the policy incurs before that interval ends. Convert effort to monetary cost using declared rates when the decision requires a common unit.
+
+Additional limits can distinguish acceptance, defects or lateness. Set $A=1$ when the policy releases an outcome under its terminal acceptance rule and $Y=1$ when an accepted outcome has a material defect. Both are binary with $Y\le A$. At a deadline $d>0$, set $L=\ind\{T>d\}$. For a service that requires timely defect-free acceptance, the failure indicator is
+\begin{equation}
+ F=1-(A-Y)(1-L).
+ \label{eq:joint-failure}
+\end{equation}
+Keep the acceptance rule fixed when comparing candidate topologies. If timely handoff fulfils the obligation, score it as success in $F$ under the agreed handoff rule.
 
 \FloatBarrier
-Measure each complete attempt from task classification through the terminal decision to preserve the dependence between stages. Include the charges for any controller calls in that interval.
-For configuration $\theta_j$, define the outcome coefficients
+For configuration $\theta_j$, use complete attempts to estimate the cell means
 \begin{equation}
  \begin{aligned}
  a_{gjk}&=\mathbb E[A\mid g,\theta_j,k],&
  b_{gjk}&=\mathbb E[Y\mid g,\theta_j,k],\\
  c_{gjk}&=\mathbb E[C\mid g,\theta_j,k],&
- \ell_{gjk}&=\mathbb E[L\mid g,\theta_j,k].
+ \ell_{gjk}&=\mathbb E[L\mid g,\theta_j,k],\\
+ f_{gjk}&=\mathbb E[F\mid g,\theta_j,k].&
  \end{aligned}
  \label{eq:outcomes}
 \end{equation}
-The coefficient ranges are $0\le b_{gjk}\le a_{gjk}\le1$, $0\le\ell_{gjk}\le1$, $c_{gjk}<\infty$.
+The coefficient ranges are $0\le b_{gjk}\le a_{gjk}\le1$, $f_{gjk},\ell_{gjk}\in[0,1]$ and $0\le c_{gjk}<\infty$.
 Estimate cost from the charges incurred during those executions. Graphs with the same number of edges can trigger different calls.
 In a sweep using graphs from G-Designer, a 75\% edge reduction with every agent retained yielded a 5.27\% reduction in weighted token use (Table~7 in Li et al.~\cite{e2explainer2026}).
 A cell with $\mu_{gk}=0$ contributes zero, so any coefficients satisfying these ranges may be assigned to it.
 
-Suppose we run each configuration on ten tasks per group in a scenario with a 180\,s deadline. The acceptance rule allows late outputs.
-Divide each total by the ten attempts, including rejections, to estimate the coefficients in~\eqref{eq:outcomes} (Table~\ref{tab:outcome-example}).
+Suppose we run each configuration on ten tasks per group at a 180\,s deadline. Acceptance allows late results, while success requires~\eqref{eq:joint-failure}.
+Estimate each coefficient by dividing its observed total by ten (Table~\ref{tab:outcome-example}).
 
 \begin{table}[H]
 \centering
 \small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}llcccc@{}}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}llrrrrr@{}}
 \toprule
-Task group $g$ & Configuration $j$ &
-\shortstack{Accepted\\ $\bar a$} &
-\shortstack{Accepted with a\\ material defect $\bar b$} &
-\shortstack{Cost per attempt\\ (USD) $\bar c$} &
-\shortstack{Late\\ $\bar\ell$}\\
+Task group & Configuration &
+$\bar a$ & $\bar b$ & $\bar c$ (USD) & $\bar\ell$ & $\bar f$\\
 \midrule
-Routine (1)   & Single call (1)       & $8/10=0.80$ & $2/10=0.20$ & $0.20/10=0.02$ & $1/10=0.10$\\
-Routine (1)   & Review with repair (2) & $9/10=0.90$ & $1/10=0.10$ & $0.50/10=0.05$ & $2/10=0.20$\\
-Migration (2) & Single call (1)       & $7/10=0.70$ & $3/10=0.30$ & $0.30/10=0.03$ & $2/10=0.20$\\
-Migration (2) & Review with repair (2) & $8/10=0.80$ & $1/10=0.10$ & $0.70/10=0.07$ & $3/10=0.30$\\
+Routine (1)   & Single call (1)        & 0.80 & 0.20 & 0.02 & 0.10 & 0.50\\
+Routine (1)   & Review with repair (2) & 0.90 & 0.10 & 0.05 & 0.20 & 0.40\\
+Ambiguous (2) & Single call (1)        & 0.70 & 0.30 & 0.03 & 0.20 & 0.70\\
+Ambiguous (2) & Review with repair (2) & 0.80 & 0.10 & 0.07 & 0.30 & 0.50\\
 \bottomrule
 \end{tabular}
-\caption{Illustrative outcome estimates in scenario $k=1$.}
+\caption{Illustrative estimates for ten attempts per row in scenario $k=1$.
+The columns give acceptance, acceptance with a material defect, mean cost per attempt, lateness and all-task failure.}
 \label{tab:outcome-example}
 \end{table}
 
-In the first row, two of the ten attempts yield an accepted output with a
-material defect, giving $\bar b_{111}=0.20$. The defect fraction among the
-eight accepted outputs is $2/8=0.25$.
+In the first row, two of the eight accepted results have a defect and one of the six defect-free results arrives late. Five attempts meet the service obligation. The conditional defect fraction is $2/8=0.25$ and the failure fraction is $5/10=0.50$.
 
 \begin{assumption}[Deployment validity]\label{ass:deployment}
 Every configuration terminates almost surely with finite expected cost.
@@ -214,56 +212,67 @@ Within each operating scenario, the conditional coefficients in~\eqref{eq:outcom
 
 When configurations share capacity, changing the routing weights can change their outcomes. Use measurements with adequate coverage or a justified system model to check whether the coefficients remain valid across the permitted mixtures.
 
-\section{Constrained selection among workflow configurations}
+\section{Choosing a policy under cost and failure limits}
 \label{sec:selection}
 
-Consider a finite set of configurations $\Theta_J=\{\theta_1,\ldots,\theta_J\}$.
-For a task in group $g$, the router chooses configuration $j$ with probability $w_{gj}$.
-The probabilities for each group sum to one.
+Let \(\Pi\) contain the complete policies an engineer can deploy for the task. Each policy specifies its workflow and any routing, escalation or fallback rules that affect execution. A finite list can include a fixed configuration, a rule that selects configurations at intake or a scheduler that reacts to load. Let \(c_k(\pi)\) and \(f_k(\pi)\) denote its expected total cost per submitted task and its probability of task failure in scenario \(k\).
+For a failure ceiling \(\tau\in[0,1]\), choose
+\begin{equation}
+ \begin{aligned}
+ \underset{\pi\in\Pi,\ z\in\mathbb R}{\operatorname{minimise}}\quad &z\\
+ \text{subject to}\quad &c_k(\pi)\le z,\qquad f_k(\pi)\le\tau
+                         &&(k=1,\ldots,K).
+ \end{aligned}
+ \label{eq:policy-choice}
+\end{equation}
+Apply any further service limits to the scenario or group that the service commitment covers. For example, a limit on unsafe escalation can apply even when the subsequent investigation delivers a correct diagnosis. For a finite list with known outcome means, test each policy against the limits and compare the highest expected costs of those that qualify. Existence of a feasible policy then guarantees an attained minimum. The choice applies to the declared policies and scenarios.
+
+\subsection{Routing with fixed outcome coefficients}
+
+Under Assumption~\ref{ass:deployment}, a finite pool of configurations supports a continuum of routing policies. Let \(\Theta_J=\{\theta_1,\ldots,\theta_J\}\), and let \(w_{gj}\) be the probability of selecting configuration \(j\) on a task with observed group \(g\). The routing weights belong to
 \begin{equation}
  \mathcal W_J=
- \left\{w\in\mathbb R^{n_g\times J}:\ w_{gj}\ge0,
-              \ \sum_jw_{gj}=1\ \text{for every }g\right\}.
+ \left\{w\in\mathbb R^{n_g\times J}:\
+ w_{gj}\ge0,\quad \sum_jw_{gj}=1\ \text{for every }g\right\}.
  \label{eq:simplex}
 \end{equation}
-To find the scenario mean for any outcome $v\in\{a,b,c,\ell\}$, weight each cell mean by that cell's share of attempts in scenario $k$.
+Set \(w_{gj}=0\) for configurations ineligible for group \(g\). Each group the router serves needs at least one eligible configuration.
+
+\begin{lemma}[Mixture outcomes]\label{lem:mixture}
+Under Assumption~\ref{ass:deployment}, the scenario mean for each \(v\in\{a,b,c,\ell,f\}\) is
 \begin{equation}
  v_k(w)=\sum_{g=1}^{n_g}\sum_{j=1}^{J}\mu_{gk}w_{gj}v_{gjk}.
  \label{eq:mixture}
 \end{equation}
-When $a_k(w)>0$, the defect fraction among accepted outputs is $q_k(w)=b_k(w)/a_k(w)$.
-
-\begin{lemma}[Mixture outcomes]\label{lem:mixture}
-Under Assumption~\ref{ass:deployment}, equation~\eqref{eq:mixture} gives each scenario's outcome means for the deployed rule.
-If $a_k(w)>0$, then
+If \(a_k(w)>0\), the fraction \(q_k(w)\) of accepted outputs with a material defect satisfies
 \begin{equation}
- q_k(w)=
- \sum_{\{(g,j):\,a_{gjk}>0\}}
- \frac{\mu_{gk}w_{gj}a_{gjk}}{a_k(w)}
- \frac{b_{gjk}}{a_{gjk}}.
+ q_k(w)=\frac{b_k(w)}{a_k(w)}
+       =\sum_{\{(g,j):\,a_{gjk}>0\}}
+         \frac{\mu_{gk}w_{gj}a_{gjk}}{a_k(w)}
+         \frac{b_{gjk}}{a_{gjk}}.
  \label{eq:accepted-mixture}
 \end{equation}
 \end{lemma}
 \begin{proof}
-The law of total expectation gives~\eqref{eq:mixture} because each cell $(g,j)$ has probability $\mu_{gk}w_{gj}$ in scenario $k$.
-Cells with $a_{gjk}=0$ have $b_{gjk}=0$.
-Omit the zero terms from $b_k(w)$, then divide by $a_k(w)$ to obtain~\eqref{eq:accepted-mixture}.
-The weights in~\eqref{eq:accepted-mixture} sum to one.
+In scenario \(k\), cell \((g,j)\) has probability \(\mu_{gk}w_{gj}\), so total expectation gives~\eqref{eq:mixture}. Cells with \(a_{gjk}=0\) have \(b_{gjk}=0\). Divide the remaining terms of \(b_k(w)\) by \(a_k(w)\) and factor each term to obtain~\eqref{eq:accepted-mixture}.
 \end{proof}
 
-Equation~\eqref{eq:accepted-mixture} weights each cell's defect fraction by its share of accepted outputs.
-Of two cells with the same share of attempts, the one that accepts more often gets more weight.
+For a task whose success requires a clean accepted result by its deadline, failure is the union of two events, absence of a clean accepted result and lateness. The two probabilities in scenario \(k\) are \(1-a_k(w)+b_k(w)\) and \(\ell_k(w)\). Hence
+\begin{equation}
+ \max\{1-a_k(w)+b_k(w),\,\ell_k(w)\}
+ \le f_k(w)
+ \le \min\{1,\,1-a_k(w)+b_k(w)+\ell_k(w)\}.
+ \label{eq:failure-marginals}
+\end{equation}
+These bounds allow the two events to overlap as much or as little as their marginal probabilities permit. Recording \(F\) for each submitted task gives a direct estimate of the failure probability.
 
-We seek the least costly rule that meets the service requirements in every scenario.
-Fix the defect limit among accepted outputs at $\varepsilon\in[0,1]$.
-Require the workflow to release an output for at least a fraction $\gamma\in(0,1]$ of the tasks it receives. For release notes, $\gamma=0.80$ would require publication for at least 80 of every 100 submitted tasks on average in each operating scenario.
-The late fraction may be at most $\delta\in[0,1]$.
-Minimise $z\in\mathbb R$, which bounds expected cost from above in every scenario.
+The linear programme for scenario-wide limits is
 \begin{equation}
  \begin{aligned}
  \underset{w,z}{\operatorname{minimise}}\quad &z\\
  \text{subject to}\quad
  &c_k(w)\le z &&(k=1,\ldots,K),\\
+ &f_k(w)\le\tau &&(k=1,\ldots,K),\\
  &b_k(w)-\varepsilon a_k(w)\le0 &&(k=1,\ldots,K),\\
  &a_k(w)\ge\gamma &&(k=1,\ldots,K),\\
  &\ell_k(w)\le\delta &&(k=1,\ldots,K),\\
@@ -271,195 +280,111 @@ Minimise $z\in\mathbb R$, which bounds expected cost from above in every scenari
  \end{aligned}
  \label{eq:master}
 \end{equation}
+Include the last three service rows when the corresponding requirements apply. For a conditional defect limit \(\varepsilon\in[0,1]\), impose a positive acceptance floor \(\gamma\in(0,1]\) on the same population. This keeps the denominator positive and the feasible weight set closed. A separate lateness ceiling is \(\delta\in[0,1]\).
 
-\begin{theorem}[Finite-configuration optimum]\label{thm:master}
-Under Assumption~\ref{ass:deployment}, programme~\eqref{eq:master} is a linear programme with $n_gJ+1$ variables.
-It is equivalent to minimising $\max_kc_k(w)$ subject to the population requirements $(q_k(w)\le\varepsilon,\ a_k(w)\ge\gamma,\ \ell_k(w)\le\delta)$ for every scenario.
-When feasible, the programme attains a finite minimum over $\Theta_J$.
+\begin{theorem}[Finite-pool routing optimum]\label{thm:master}
+Under Assumption~\ref{ass:deployment}, programme~\eqref{eq:master} has \(n_gJ+1\) variables and solves~\eqref{eq:policy-choice} over the routing policies \(\mathcal W_J\) with the stated service limits. It attains a finite minimum whenever it is feasible.
 \end{theorem}
 \begin{proof}
-The minimum acceptance rate gives $a_k(w)\ge\gamma>0$. This excludes an all-rejection rule, for which $a_k(w)=b_k(w)=0$ satisfies the linear defect inequality with an undefined defect fraction. Multiplying by the positive denominator gives
-\[
- \frac{b_k(w)}{a_k(w)}\le\varepsilon
- \quad\Longleftrightarrow\quad
- b_k(w)-\varepsilon a_k(w)\le0.
-\]
-With $\varepsilon$ fixed, each constraint is linear in $(w,z)$.
-For any feasible $w$, the smallest allowed $z$ is $\max_kc_k(w)$.
-The feasible weights form a closed subset of the compact set $\mathcal W_J$. The continuous function $\max_k c_k(w)$ attains a minimum there whenever the subset is nonempty.
+Equation~\eqref{eq:mixture} makes every outcome mean linear in \(w\). When the conditional defect limit applies, \(a_k(w)\ge\gamma>0\), so multiplying \(q_k(w)\le\varepsilon\) by \(a_k(w)\) gives the corresponding linear row. Fix any feasible \(w\). Its smallest admissible \(z\) is \(\max_kc_k(w)\). The feasible weights form a closed subset of the compact set \(\mathcal W_J\), and the continuous function \(\max_kc_k(w)\) attains its minimum on that subset when nonempty.
 \end{proof}
 
-Selecting one configuration per group restricts the routing probabilities to binary values. The service requirements may make every such assignment infeasible even when a mixture works.
-
-\paragraph{Requirements for each routing group.}
-Write $v_{gk}(w)=\sum_j w_{gj}v_{gjk}$ for a conditional outcome.
-To enforce the same limits within each task group, impose
-\[
- a_{gk}(w)\ge\gamma,\qquad
- b_{gk}(w)-\varepsilon a_{gk}(w)\le0,\qquad
- \ell_{gk}(w)\le\delta
- \quad (\mu_{gk}>0).
-\]
-The objective minimises the highest scenario-wide cost $c_k(w)$.
-For each service limit, summing the group inequalities weighted by $\mu_{gk}$ recovers the scenario-wide requirement.
-These additional constraints can raise the minimum cost or leave no feasible rule.
-The bounds in Section~\ref{sec:calibration} also apply within each group because its routing weights are nonnegative.
-
-\paragraph{Requirements for independently assessed groups.}
-Classifying migrations as routine can hide poor service for actual migrations. Consider 80 routine tasks and 20 migrations. The classifier labels ten migrations as routine and classifies every other task correctly. If the workflow rejects just those ten, it accepts 88.9\% of predicted routine tasks and all predicted migrations. Only half of the actual migrations receive an accepted result.
-To constrain service for $H=h$, estimate each mean $v_{hgjk}$ conditional on both labels and on configuration $j$ in scenario $k$. If the conditional label proportions are fixed and the coefficients remain valid across the permitted rules, weight the cell means by those proportions and the routing probabilities.
+A comparison of unrestricted mixtures gives the lowest cost in that class, which can use different graph families within a task group. To require a single graph family across the workload, index the families by \(t\in\mathcal T\) and write \(t(j)\) for the family of configuration \(j\). Add
 \begin{equation}
- v_{hk}(w)=\sum_{g,j}\Pr(G=g\mid H=h,k)w_{gj}v_{hgjk}.
+ \sum_{t\in\mathcal T}y_t=1,\qquad y_t\in\{0,1\},\qquad
+ w_{gj}\le y_{t(j)}\quad\text{for every }g,j.
+ \label{eq:one-family}
+\end{equation}
+A family groups configurations by a declared information-flow pattern. Grouping configurations by exact graph enforces one topology. Both choices permit different settings within the selected topology class. The resulting problem is a mixed-integer linear programme. Equivalently, solve one linear programme per family with all other weights set to zero and compare the feasible optima. A decision requiring a single complete configuration sets \(w_{gj}=\mathbf1\{j=j^\star\}\) for every \(g\) and can compare all \(J\) fixed policies directly. Binary \(w_{gj}\) allow a different deterministic configuration for each group. These restrictions can raise the minimum cost or make the service limits infeasible.
+
+Shared capacity and state carried across submissions can change the outcome of a configuration as the routing policy changes. In that case, estimate the outcomes of complete policies under the intended workload and apply~\eqref{eq:policy-choice} to those policies. Section~\ref{sec:discussion} gives a case in which a coordinated scheduler serves a workload that defeats every independent mixture.
+
+\paragraph{Requirements for task groups.}
+For each observed group with \(\mu_{gk}>0\), the outcome mean in scenario \(k\) is \(v_{gk}(w)=\sum_jw_{gj}v_{gjk}\). Apply the chosen failure and auxiliary service limits to these means if the service commitment applies within each routing group. The cost objective still uses the full workload. When every nonempty group meets the same limits, weighting each linear inequality by \(\mu_{gk}\) and summing gives the scenario-wide inequality.
+
+A commitment for an independently assessed group \(H=h\) requires outcomes for that group. For example, suppose a classifier labels ten of 20 urgent tasks as routine and correctly labels the rest, including all 80 routine tasks. The workflow rejects these ten tasks at its final check and releases outputs for the others. It accepts 88.9\% of predicted routine tasks, every predicted urgent task and half of the actual urgent tasks. For \(\Pr(H=h\mid k)>0\), let \(v_{hgjk}\) be the cell mean for this group among tasks with observed label \(G=g\). If the conditional label proportions and these means stay fixed as routing changes, then
+\begin{equation}
+ v^H_{hk}(w)=\sum_{g,j}\Pr(G=g\mid H=h,k)\,w_{gj}v_{hgjk}.
  \label{eq:service-group-mean}
 \end{equation}
-This expression is linear in $w$. Apply the acceptance and lateness limits to these means and use $b_{hk}(w)-\varepsilon a_{hk}(w)\le0$ for defects.
-If the conditional label proportions are estimated, the guarantee must account for their uncertainty as well as uncertainty in the outcome means.
+The fresh draw in Assumption~\ref{ass:deployment} gives the same \(w_{gj}\) within each \(H\) stratum at fixed \(G\). Apply the selected limits to~\eqref{eq:service-group-mean}, using \(b^H_{hk}(w)-\varepsilon a^H_{hk}(w)\le0\) for a conditional defect limit. When label proportions are estimated, account for their uncertainty as well as uncertainty in the cell means.
 
-\begin{proposition}[Reducing routing variables]\label{prop:reduction}
-Fix a group and a defect tolerance. For each configuration, consider its column with entries
-$(c_{gjk},b_{gjk}-\varepsilon a_{gjk},-a_{gjk},\ell_{gjk})$ across all scenarios with $\mu_{gk}>0$.
-Remove a column if every entry of a retained column for the same group is at most the corresponding entry of the candidate.
-At an optimal vertex of the scenario-wide programme, let $m$ count the binding scenario inequalities and $p$ count the positive weights. Then
-$p\le n_g+m-1\le n_g+4K-1$.
+\begin{proposition}[Screening and support size]\label{prop:reduction}
+For an unrestricted routing mixture or a comparison within a fixed family, a configuration may be removed from a group if a retained replacement is eligible wherever the original is used and has a coefficient no larger in every applicable inequality of the form \(\text{left-hand side}\le\text{right-hand side}\).
+At an optimal vertex of such a linear programme, let \(p\) count the positive weights and \(m\) count the binding inequality rows other than nonnegativity and group normalisation. Then \(p\le n_g+m-1\). With the scenario-wide constraints in~\eqref{eq:master}, \(m\le5K\), or \(m\le4K\) if the failure row is omitted.
 \end{proposition}
 \begin{proof}
-Transferring the removed column's weight to its replacement leaves the group sum unchanged. At fixed $z$, every inequality's left-hand side weakly decreases.
-Apply this argument separately to each removed column, keeping one representative of any tied columns.
-The routing weights are bounded, and the cost inequalities permit recession only towards larger $z$. The feasible epigraph is therefore pointed, so at least one vertex attains the finite minimum whenever it exists.
-After fixing the zero weights, a vertex has $p+1$ free coordinates including $z$.
-The $n_g+m$ active constraints must span those coordinates.
-A common nonzero null vector would allow a sufficiently small feasible perturbation of either sign, contradicting extremality.
+At fixed \(z\), transferring the weight to the replacement preserves group normalisation and weakly decreases the left-hand side of every applicable inequality. For the support bound, any recession direction keeps the bounded routing weights fixed, so the cost rows permit recession only towards larger \(z\). The feasible polyhedron is pointed, so a finite attained minimum has an optimal vertex. After fixing the zero weights, the \(n_g+m\) binding rows must span the remaining \(p+1\) coordinates, which include \(z\). A common nonzero null direction would give feasible perturbations of both signs and contradict extremality.
 \end{proof}
 
-The same dominance test applies to the programme with group constraints. Fixed confidence bounds can supply its coefficients.
-Repeat the test whenever any coefficient changes. A different defect tolerance can change the risk coefficient.
-For group $g$, column $r$ dominates column $j$ for every nonnegative tolerance if the following inequalities hold whenever $\mu_{gk}>0$.
+For the scenario-wide programme, the inequality coefficients for a group \(g\) and a candidate \(j\) are
 \[
- c_{grk}\le c_{gjk},\qquad b_{grk}\le b_{gjk},\qquad
- a_{grk}\ge a_{gjk},\qquad \ell_{grk}\le\ell_{gjk}.
+ \mu_{gk}\bigl(c_{gjk},f_{gjk},b_{gjk}-\varepsilon a_{gjk},
+                       -a_{gjk},\ell_{gjk}\bigr)
 \]
-At a fixed tolerance, replace the comparison of $b$ with a comparison of $b-\varepsilon a$ to detect further dominated columns. Retain the other comparisons above.
-Pairwise screening takes $O(n_gKJ^2)$ scalar comparisons once the coefficients are available.
-Screening before evaluation requires structural evidence, such as an identical execution law with a higher tariff.
-Include any restrictions on configuration use in the feasible set. For example, enforce any rule that limits immediate rejection.
+with entries for the rows in force. Include every additional row that a replacement can affect, including those derived from independently assessed groups or limits on configuration use. Include failure when sweeping its ceiling or breaking cost ties, even if its row is redundant at the initial ceiling. When one fixed configuration must serve every group, compare its complete policy across all groups. Compare tied columns within the same eligibility conditions and keep a representative. Screening based on the estimated or conservative programme preserves its optimum for those coefficients. To certify dominance at population values, use simultaneous upper bounds on replacement-minus-original coefficient differences over all relevant rows. For a test valid across conditional defect limits, compare \(b\) and \(-a\) separately along with the other rows. Repeat the comparison when outcome definitions or coefficients change.
 
-\begin{proposition}[Fixed-budget search]\label{prop:budget}
-For $B\ge0$, let $\mathcal W_B$ contain the weights satisfying $(c_k(w)\le B,\ a_k(w)\ge\gamma,\ \ell_k(w)\le\delta)$ for every scenario.
-If $\mathcal W_B$ is nonempty, the value
-\[
- q_B^*=\min_{w\in\mathcal W_B}\max_k\frac{b_k(w)}{a_k(w)}
-\]
-is attained in $[0,1]$.
-For fixed $\varepsilon\in[0,1]$, the inequality $q_B^*\le\varepsilon$ holds exactly when~\eqref{eq:master} is feasible with $z\le B$.
-Feasibility is monotone in $\varepsilon$.
+\subsection{The cost and failure frontier}
+
+Costs and failures may favour different policies. For example, a pair with worst-scenario cost and failure \((1,0.20)\) and \((2,0.05)\) has its lowest cost at the first policy and its lowest failure at the second. Let the service owner choose the highest acceptable failure rate or the available cost per task.
+
+\begin{proposition}[Fixed-budget failure search]\label{prop:budget}
+For \(B\ge0\), keep the auxiliary service limits and restrict the policies to those with \(c_k(\pi)\le B\) in every scenario. If this class is nonempty and is either finite or a closed subset of \(\mathcal W_J\) under Assumption~\ref{ass:deployment}, the minimum of \(\max_k f_k(\pi)\) is attained. That minimum is at most \(\tau\) exactly when~\eqref{eq:policy-choice} is feasible with \(z\le B\). The continuous routing case with a polyhedral set of admissible weights gives a linear programme.
 \end{proposition}
 \begin{proof}
-Each denominator is at least $\gamma>0$.
-Continuity of the objective on the nonempty compact set $\mathcal W_B$ ensures that the minimum is attained.
-The linear risk constraint in Theorem~\ref{thm:master} establishes the feasibility equivalence.
-For $\varepsilon'\ge\varepsilon$, nonnegative acceptance implies
-$b_k(w)-\varepsilon'a_k(w)\le b_k(w)-\varepsilon a_k(w)$.
-Thus increasing the tolerance preserves feasibility.
+A nonempty finite set has a minimiser. For routing weights, the feasible set under the budget is compact and \(\max_k f_k(w)\) is continuous. The equivalence follows by imposing the cost and failure ceilings together. In the routing programme, impose \(c_k(w)\le B\) for every \(k\), replace the failure ceiling by a variable \(u\) through \(f_k(w)\le u\), and minimise \(u\).
 \end{proof}
 
-To find the minimum defect fraction under a fixed budget, check feasibility exactly at the endpoints $\varepsilon\in\{0,1\}$.
-Bisect only when the endpoints bracket a change from infeasibility to feasibility.
-\begin{center}
-\begin{tabular}{@{}lp{.58\linewidth}@{}}
-\toprule
-Endpoint result & Consequence\\
-\midrule
-$\varepsilon=0$ feasible & The minimum risk is zero.\\
-$\varepsilon=1$ infeasible & Every candidate mixture violates a chosen limit.\\
-Only $\varepsilon=1$ feasible & Bisect to width at most $\eta$, retaining a feasible upper endpoint.\\
-\bottomrule
-\end{tabular}
-\end{center}
-For $0<\eta<1$, bisection reaches the required width in at most $\lceil\log_2(1/\eta)\rceil$ midpoint checks.
-Infeasibility under conservative confidence bounds leaves population feasibility open.
+Vary \(\tau\) in~\eqref{eq:policy-choice} to find the minimum cost at each failure ceiling for the same policy class. This applies the epsilon-constraint method to cost and failure~\cite{mavrotas2009}. Among policies tied at the minimum cost, minimise worst-scenario failure to return a nondominated pair. The budget formulation gives the reverse comparison and can break failure ties by minimising the highest expected cost per attempt.
 
-For one scenario the Charnes--Cooper transformation reduces the problem exactly to a single linear programme \cite{boyd,charnesCooper}.
-Write the fixed-budget feasible set as $Dw\le h$, $Ew=\mathbf 1$, $w\ge0$.
-Set $t=1/a(w)$, then $x=tw$. Minimise $b(x)$ subject to
+\paragraph{A fixed budget with a conditional defect target.}
+When the service commitment specifically concerns accepted outputs, keep a positive acceptance floor and minimise \(\max_k q_k(w)\) under the cost cap and the applicable outcome limits. At a fixed defect ceiling \(\varepsilon\), test feasibility using the row \(b_k(w)-\varepsilon a_k(w)\le0\). Increasing \(\varepsilon\) preserves feasibility since \(a_k(w)\ge0\). Test the endpoints \(0\) and \(1\). A feasible zero is optimal, and infeasibility at one leaves an empty feasible set for the point-coefficient programme. When the endpoints bracket the change, bisection to width \(\eta\in(0,1)\) takes at most \(\lceil\log_2(1/\eta)\rceil\) midpoint checks, retaining a feasible upper endpoint. Infeasibility under conservative confidence bounds leaves population feasibility open.
+
+For one scenario, the Charnes--Cooper transformation~\cite{boyd,charnesCooper} solves this budget problem in one linear programme. Write the feasible weights as \(Dw\le h\), \(Ew=\mathbf1\), \(w\ge0\), with a positive acceptance floor and with \(Ew=\mathbf1\) containing the group sums. Set \(s=1/a(w)\) and \(x=sw\), and minimise \(b(x)\) subject to
 \[
- Dx\le ht,\qquad Ex=t\mathbf 1,\qquad a(x)=1,\qquad x\ge0,\qquad t\ge0.
+ Dx\le hs,\qquad Ex=s\mathbf1,\qquad a(x)=1,\qquad x\ge0,\quad s\ge0 .
 \]
-The equalities force $t>0$, so $w=x/t$ recovers a feasible rule with the same objective.
-One scaling also works across scenarios when their denominators are positive fixed multiples of a common linear function.
+If \(s=0\), the group sums and nonnegativity force \(x=0\), contradicting \(a(x)=1\). Hence \(w=x/s\) recovers a feasible rule and \(b(x)=q(w)\). If the denominators in multiple scenarios have the form \(a_k(w)=d_k a_0(w)\) for fixed \(d_k>0\), use the common scale \(s=1/a_0(w)\). A common upper bound \(u\) on the defect fractions then imposes \(b_k(x)\le d_ku\) for each scenario. With the acceptance and lateness limits from Appendix~\ref{app:exact} and a budget of USD~1.30 per attempt in the adverse scenario alone, the minimum conditional defect fraction is \(123/1300\), about 9.46\%. The reproduction check compares bisection with the single linear programme and gives an exact rational lower bound.
 
-For the adverse scenario alone, retain $(\gamma,\delta)$ from Appendix~\ref{app:exact} under an expected-cost cap of USD~1.30 per attempt.
-The minimum defect fraction among accepted outputs is $123/1300$ (about 9.46\%).
-The reproduction check verifies bisection's numerical agreement with the single-LP result. An exact rational lower bound confirms the optimum.
-
-\section{Confidence bounds after graph search}
+\section{Confidence bounds for selection}
 \label{sec:calibration}
 
-Choose which configurations to take forward using development data.
-Before collecting a fresh sample, freeze that set and the classifier that assigns tasks to groups. Fix the service definitions and the outcome labelling rubric at the same time.
-Use the held-out runs, called the calibration sample, to bound the population coefficients.
-Conditional on the development results, bounds that cover every cell coefficient simultaneously also bound the outcomes under every routing rule the optimiser may select.
+Development runs inform the choice of configurations to evaluate. Before collecting a fresh calibration sample, freeze the candidate pool and classifier. Fix the outcome definitions and assessment rubric at the same time. When shared load affects task outcomes, calibrate the finite set of complete policies using independent workload runs as described in Section~\ref{sec:discussion}.
 
-Let $\mathcal E$ be the simultaneous coverage event
+Let $i$ index the relevant cells of the routing programme, or policy--scenario pairs when comparing complete policies directly. For each mean $v_i$ used by the decision, construct the necessary endpoints $v_i^-$ and $v_i^+$. The event $\mathcal E$ is simultaneous coverage of all endpoints used in the comparison.
 \begin{equation}
- \mathcal E=\left\{
- a^-_{gjk}\le a_{gjk},\quad
- b_{gjk}\le b^+_{gjk},\quad
- c_{gjk}\le c^+_{gjk},\quad
- \ell_{gjk}\le\ell^+_{gjk}
- \text{ for all relevant cells}\right\}.
+ v_i^-\le v_i\le v_i^+\qquad\text{for each mean with both endpoints.}
  \label{eq:coverage}
 \end{equation}
-Aggregate the cell bounds with weights $\mu_{gk}w_{gj}$ as in~\eqref{eq:mixture}.
-The conservative programme minimises the upper bound on the highest expected cost across scenarios.
-In each scenario, the upper bound on the late fraction must meet the lateness ceiling.
-It imposes the acceptance constraint $a_k^-(w)\ge\gamma$ and the defect constraint $b_k^+(w)\le\varepsilon a_k^-(w)$.
+For the mixture programme, aggregate endpoints with the nonnegative weights $\mu_{gk}w_{gj}$ from~\eqref{eq:mixture}. Apply the same construction to any independently assessed group using its conditional weights. If the group proportions are estimated, include their uncertainty in the calculation.
 
-\begin{theorem}[Validity after data-dependent selection]\label{thm:calibration}
-Under Assumption~\ref{ass:deployment}, suppose the event $\mathcal E$ in~\eqref{eq:coverage} has probability at least $1-\alpha$, with $0<\alpha<1$.
-On $\mathcal E$, every rule feasible for the conservative programme meets the population requirements.
-This holds for every nonnegative defect tolerance.
-If the selection procedure returns only rules feasible for that programme, the probability that it returns a rule violating a population requirement is at most $\alpha$.
+Solve a conservative programme using the upper bounds on failure and cost. For additional service rows, use the lower acceptance bound and the upper bounds on lateness and joint defects. In each row with a defect ceiling $\varepsilon$, require $b^+-\varepsilon a^-\le0$ and retain the positive minimum on $a^-$. Solve an optimistic programme with the opposite endpoints to obtain a cost lower bound for the same policy class.
+
+\begin{theorem}[Validity and cost gap after selection]\label{thm:calibration}
+Assume the population means describe the permitted policies. Use known group proportions to aggregate cell bounds, or use endpoints valid for the aggregate means of every permitted policy. Assume $\Pr(\mathcal E)\ge1-\alpha$ for $0<\alpha<1$. On $\mathcal E$, every conservative feasible policy meets the population limits, and every population feasible policy is optimistic feasible. If a procedure returns only conservative feasible policies, its probability of returning one that violates a population limit is at most $\alpha$.
+If it returns $\hat\pi$, write $U$ for its conservative cost and $L_\star$ for the optimistic optimum. On $\mathcal E$, its population cost exceeds the population optimum by at most $U-L_\star$.
 \end{theorem}
 \begin{proof}
-Nonnegative coefficients $\mu_{gk}w_{gj}$ ensure that weighted sums preserve every inequality in~\eqref{eq:coverage}.
-For $\varepsilon\ge0$, any feasible rule satisfies
-\[
- b_k(w)-\varepsilon a_k(w)
- \le b_k^+(w)-\varepsilon a_k^-(w)\le0,
- \qquad
- a_k(w)\ge a_k^-(w)\ge\gamma>0.
-\]
-Division by $a_k(w)$ proves the risk requirement.
-The event $\mathcal E$ covers every feasible routing rule at every tolerance, so the guarantee applies when the choice uses the held-out observations.
-A returned rule can violate a population requirement only on $\mathcal E^c$, which has probability at most $\alpha$.
-If the development data are random, average the conditional error bound over their distribution.
+On $\mathcal E$, weighted sums with known group proportions preserve the cell inequalities. With aggregate bounds the same inequalities hold by the coverage assumption. Each conservative service row bounds its population row on the stricter side. For the optional defect limit with $\varepsilon\ge0$, $b-\varepsilon a\le b^+-\varepsilon a^-$ and $a\ge a^-\ge\gamma>0$ on that feasible set. Reversing the endpoint choices gives the inclusion in the optimistic feasible set.
+A returned policy can violate a limit only on $\mathcal E^c$. On $\mathcal E$, $U$ bounds the highest expected cost of $\hat\pi$ from above, and the optimistic optimum $L_\star$ bounds the population optimum from below. Subtracting the two bounds proves the cost-gap result.
 \end{proof}
 
-As in Learn then Test~\cite{ltt}, the error bound applies over repeated draws of the held-out sample. Estimating the error probability given that a rule is returned requires a further calculation.
-On $\mathcal E$, a feasible rule's objective value bounds its highest expected cost across scenarios. To bound how far that rule is from optimal, also obtain a lower bound on the population optimum.
+With separate mean bounds, the same event covers every failure ceiling and any policy selected using the covered endpoints. If the analysis conditions on random development data, average its conditional error bound over those data. As in Learn then Test~\cite{ltt}, the error probability is over repeated draws of calibration data. Report how often the procedure recommends a policy alongside the error bound and the cost gap. Optimistic infeasibility on $\mathcal E$ excludes the represented pool. Conservative infeasibility leaves room for a feasible policy that the sample is too small to certify.
 
-For $N$ nonempty cells, set the sampling plan and sample sizes independently of the outcomes in the calibration sample.
-In each cell $i$, take $n_i\ge1$ independent draws from its population.
-To justify the cost range $0\le C\le C_{\max,i}$ in each cell, account for the charges for every permitted call and any fallback.
-A finite expected cost can coexist with arbitrarily expensive attempts. With unbounded charges, choose a confidence bound whose assumptions the cost distribution satisfies.
-Write $(\bar a_i,\bar b_i,\bar c_i,\bar\ell_i)$ for the sample means of $(A,Y,C,L)$ in cell $i$.
+Set sample sizes independently of calibration outcomes. Within each cell $i$, draw $n_i\ge1$ independent observations from its target population. Justify a bound $C_{\max,i}$ on cost from all allowed calls and any fallback. Use a method appropriate to the cost distribution when such a cap is unavailable. For a mean with observations in $[0,R_i]$, where $R_i=1$ for binary outcomes or per-run rates and $R_i=C_{\max,i}$ for cost, one-sided Hoeffding endpoints use
 \begin{equation}
- \begin{gathered}
- r_i=\sqrt{\frac{\log(4N/\alpha)}{2n_i}},\\
- a_i^- =\max\{0,\bar a_i-r_i\},\qquad
- b_i^+ =\min\{1,\bar b_i+r_i\},\\
- \ell_i^+=\min\{1,\bar\ell_i+r_i\},\qquad
- c_i^+=\min\{C_{\max,i},\bar c_i+C_{\max,i}r_i\}.
- \end{gathered}
+ \begin{aligned}
+ r_i&=\sqrt{\frac{\log(M/\alpha)}{2n_i}},\\
+ v_i^-&=\max\{0,\bar v_i-R_i r_i\},\qquad
+ v_i^+=\min\{R_i,\bar v_i+R_i r_i\}.
+ \end{aligned}
  \label{eq:hoeffding}
 \end{equation}
-Hoeffding's inequality bounds each one-sided failure probability by $\alpha/(4N)$~\cite{hoeffding}.
-A union bound over the $4N$ failure events gives $\Pr(\mathcal E^c)\le\alpha$ even when observations in different cells are dependent.
-Known deterministic outcomes have exact coefficients.
-If observations determine when sampling stops, construct a confidence bound valid at that stopping time.
+Here $M$ counts the required one-sided endpoints across all cells. Each fails with probability at most $\alpha/M$~\cite{hoeffding}. A union bound allows dependence between cells. Known means need no sampling allocation. For $N$ uncertain cells and two-sided coverage of all five means in~\eqref{eq:outcomes}, take $M=10N$. The one-sided experiment in Section~\ref{sec:simulation} uses four means and $M=4N$.
+Plan sample sizes against the difference in cost or failure that could change the decision. If observations determine when sampling stops, use bounds valid at that stopping time.
 
 \paragraph{Paired score bounds at a fixed defect limit.}
-If the defect tolerance $\varepsilon$ is fixed before sampling, observe the signed score
+If the conditional defect tolerance $\varepsilon\in[0,1]$ is fixed before sampling, observe the signed score
 $Z_\varepsilon=Y-\varepsilon A$ on each attempt.
 \begin{center}
 \begin{tabular}{@{}lr@{}}
@@ -474,17 +399,17 @@ Accepted with a material defect & $1-\varepsilon$\\
 \end{center}
 In the conservative programme, substitute the upper bound $u_i(\varepsilon)$ for each cell mean of $Z_\varepsilon$.
 When the bounds hold simultaneously, their weighted sum is an upper bound on the population mean score.
-Assign error probability at most $\alpha/(4N)$ to each of the four one-sided bounds per cell.
+Count the score endpoint in $M$. In the four-mean experiment here, the upper score bound replaces the upper joint-defect bound, so $M=4N$.
 
 Since $Z_\varepsilon$ has range width one, the one-sided Hoeffding bound is
 $u_i(\varepsilon)=\min\{1-\varepsilon,\bar b_i-\varepsilon\bar a_i+r_i\}$.
-This bound is at most $b_i^+-\varepsilon a_i^-$ for every sample.
+At the same Hoeffding radius, this bound is at most $b_i^+-\varepsilon a_i^-$ for every sample.
 For $\bar b_i+r_i\le1$, use $a_i^-\le\bar a_i$ to obtain the inequality.
 For $\bar b_i+r_i>1$, the separate coefficient is at least $1-\varepsilon$.
 Hold the tolerance and all other inputs fixed. Whenever the programme with separate Hoeffding bounds is feasible, the paired programme has an optimum at most as large.
 
 The empirical Bernstein bound in~\cite[Theorem~4]{maurerPontil} uses the sample variance of the transformed scores $Z_\varepsilon+\varepsilon\in[0,1]$.
-For $n_i\ge2$, set $\xi=\alpha/(4N)$ to obtain
+For $n_i\ge2$, set $\xi=\alpha/M$ to obtain
 \[
  u_i(\varepsilon)=\min\left\{1-\varepsilon,\ \bar Z_i+
  \sqrt{\frac{2s_i^2\log(2/\xi)}{n_i}}+
@@ -504,25 +429,26 @@ If the held-out observations also inform the tolerance, use bounds that cover th
 \label{sec:pricing}
 
 Measuring outcomes for every configuration can cost more than solving the linear programme.
-Start with a feasible programme over a restricted subset $\Theta_0$ of the finite admissible set $\Theta$.
-Column generation uses its dual solution to rank additional configurations by reduced cost~\cite{dantzigwolfe}.
-An outcome predictor can guide evaluation when a configuration's coefficients are unknown. The optimality comparison below uses fixed coefficients.
+For unrestricted mixtures or mixtures within a fixed topology family, start with a feasible programme over a subset $\Theta_0$ of the declared finite set $\Theta$. Where a feasible starting set is unknown, start with at least one eligible choice per group, allow nonnegative slack in each service row and minimise the sum of those slacks. Price further configurations using the slack programme's dual. A zero optimum supplies a feasible start for the cost programme. A positive optimum over the full pool certifies infeasibility for the coefficients used.
+Column generation uses the restricted dual solution to rank additional configurations by reduced cost~\cite{dantzigwolfe}.
+A predictor can guide evaluation when a configuration's coefficients are unknown. The guarantee below requires fixed coefficients and a lower bound on reduced cost across the declared pool.
 In the optimal dual solution, the nonnegative multipliers for the scenario inequalities in~\eqref{eq:master} are
 \[
  \begin{array}{@{}ll@{\quad}l@{}}
  \lambda_k & \text{cost}       & c_k(w)-z\le0 \\
- \beta_k   & \text{risk}       & b_k(w)-\varepsilon a_k(w)\le0 \\
+ \chi_k    & \text{failure}    & f_k(w)-\tau\le0 \\
+ \beta_k   & \text{defect score} & b_k(w)-\varepsilon a_k(w)\le0 \\
  \kappa_k  & \text{acceptance} & \gamma-a_k(w)\le0 \\
  \nu_k     & \text{lateness}   & \ell_k(w)-\delta\le0.
  \end{array}
 \]
-The free multiplier $\zeta_g$ corresponds to $1-\sum_jw_{gj}=0$.
+Set the multipliers for omitted rows to zero. The free multiplier $\zeta_g$ corresponds to $1-\sum_jw_{gj}=0$.
 For task group $g$, define the reduced cost of configuration $\theta$ as
 \begin{equation}
  R_g(\theta)=
  \sum_k\mu_{gk}
  \left\{
- \lambda_kc_{g\theta k}
+ \lambda_kc_{g\theta k}+\chi_k f_{g\theta k}
  +\beta_k\bigl(b_{g\theta k}-\varepsilon a_{g\theta k}\bigr)
  -\kappa_ka_{g\theta k}
  +\nu_k\ell_{g\theta k}
@@ -559,19 +485,17 @@ Holding the dual multipliers fixed in~\eqref{eq:reduced-cost} gives
 \begin{equation}
  R_g(\theta')-R_g(\theta)
  =\sum_k\mu_{gk}\E_{g,k}\!\left[
- \lambda_k\Delta C+\beta_k\Delta(Y-\varepsilon A)
+ \lambda_k\Delta C+\chi_k\Delta F+\beta_k\Delta(Y-\varepsilon A)
  -\kappa_k\Delta A+\nu_k\Delta L
  \right].
  \label{eq:edit-reduced-cost}
 \end{equation}
 Estimate the right-hand side with mean paired differences within each cell $(g,k)$. To rank edits to different configurations, add each estimated change to the reduced cost of its original configuration.
 
-The effect of withholding a message depends on what the recipient can still read. If two messages carry the same migration instruction, withholding either one leaves the instruction available. Test the combined edit in a complete execution before retaining it.
+The effect of withholding a message depends on what the recipient can still read. If two messages report the same finding, withholding either one leaves the finding available to the recipient. Test the combined edit in a complete execution before retaining it.
 Compare edits chosen by the ranking with randomly chosen valid edits under the same paid development budget. Report search expenditure separately from routing cost per attempt.
 
-To bound the optimality gap, obtain for each task group a lower bound on reduced cost that holds across the entire admissible set.
-For the programme with separate confidence bounds, use $(c^+,b^+,a^-,\ell^+)$ in place of $(c,b,a,\ell)$ in~\eqref{eq:reduced-cost}.
-Keep those bounds fixed throughout the comparison.
+For the programme with separate confidence bounds, use $(c^+,f^+,b^+,a^-,\ell^+)$ in~\eqref{eq:reduced-cost} and keep those endpoints fixed throughout pricing. Include coefficients of any additional service rows. A lower bound on all reduced costs certifies the comparison within that programme. The population cost gap requires the optimistic bound in Theorem~\ref{thm:calibration}. If pricing relies on unverified predictions, report the best evaluated policy and the scope of the search.
 Fix the set of configurations to evaluate before collecting the held-out sample.
 Theorem~\ref{thm:calibration} states the required coverage condition.
 
@@ -579,53 +503,39 @@ Theorem~\ref{thm:calibration} states the required coverage condition.
 \label{sec:prediction}
 Provider documentation identifies the settings each endpoint accepts~\cite{openai_reasoning,anthropic_effort,gemini_thinking}.
 Record each exact model identifier with its endpoint. Date the supporting documentation.
-A recommendation for difficult programming tasks can help decide which configuration to test first.
-To apply the release-note defect limit, estimate the share of accepted outputs with a material defect using complete workflow outcomes.
+A recommendation for a task like the one under study can help decide which configuration to test first. Estimate failure and cost from complete runs on the intended workload.
 Mix softmax sampling over suitability scores with a distribution that assigns positive probability to every eligible configuration.
 An ablation of features derived from provider advice can test their effect on candidate evaluation cost.
 
 For an observed input description $x$, let $\phi(x,\theta,k)$ encode the task under workflow configuration $\theta$ in scenario $k$.
 Encode the request settings for each node in its assigned role. The representation must show which nodes can access source evidence and which conditions trigger repair.
-Fit a joint outcome predictor
+When success means timely defect-free acceptance, classify each run by its terminal disposition $r$ and lateness $\lambda\in\{0,1\}$. Take $r=0$ for rejection, $r=1$ for acceptance without a material defect and $r=2$ for acceptance with a material defect. Fit a softmax model over these six categories
 \begin{equation}
-(p_R,p_G,p_B)=\softmax f_\psi(\phi(x,\theta,k)),
-\qquad \widehat a=p_G+p_B,\qquad \widehat b=p_B,
+\bigl(p_{r,\lambda}\bigr)_{r,\lambda}=\softmax h_\psi(\phi(x,\theta,k)),
+\qquad \widehat f=1-p_{1,0},
 \label{eq:predictor}
 \end{equation}
-where the subscripts identify the terminal outcome.
-\begin{center}
-\begin{tabular}{@{}ll@{}}
-\toprule
-Subscript & Outcome\\
-\midrule
-$R$ & Rejection\\
-$G$ & Acceptance without a material defect\\
-$B$ & Acceptance with a material defect\\
-\bottomrule
-\end{tabular}
-\end{center}
-The three probabilities sum to one, so $0\le\widehat b\le\widehat a\le1$.
+where $h_\psi$ gives the six fitted scores. The same joint distribution supplies the acceptance, defect and lateness marginals. When success includes another disposition, such as an appropriate handoff, use categories that distinguish it or fit the declared failure event directly.
 Fit the predictor with features available before execution. To use features that become available later, specify a justified distribution for their values and average the predictions over that distribution.
 Within each scenario, average the predictions over each group's task distribution to estimate the configuration's outcome coefficients.
 
 Estimate expected cost with a conditional-mean model.
-For a fixed deadline, estimate the lateness probability with a binary classifier.
-A completion-time distribution $F_T$ supports varying deadlines through $\ell(d)=1-F_T(d)$.
+A joint model of disposition and completion time can estimate failure at different deadlines. The marginal time distribution $F_T$ alone supplies only the lateness probability $\ell(d)=1-F_T(d)$.
 A hard timeout is a terminal outcome. If observation stops while work can still complete, define the outcome and use an estimator that accounts for the unobserved completion time.
 
 Compare a regularised predictor with graph interactions against a tree-based surrogate.
-Evaluate both predictors on held-out tasks under configurations excluded from training. A graph neural predictor needs measurements across different graph structures during development and in the final test sample.
+Evaluate both predictors on held-out tasks under configurations excluded from training. Compare their ability to find feasible policies at the same evaluation budget. If the intended use includes unseen topology families, hold out whole families. A graph neural predictor needs observations across graph structures to support that test.
 
-\section{A finite simulation with published configurations}
+\section{A finite simulation of the decision}
 \label{sec:simulation}
 The simulator enumerates every terminal outcome and weights it by its probability to obtain the population coefficients. Samples from the same distributions let us check the confidence bounds against those known values.
-The simulator applies the same rules for call outcomes and token counts to every provider. It uses those counts to calculate duration. With the execution laws fixed, the tariffs in Table~\ref{tab:registry} account for cost differences between providers.
+The simulator applies the same outcome and token laws to every provider and calculates duration from those token counts. The provider names identify settings and tariffs in Table~\ref{tab:registry}. Differences in simulated cost across providers follow from those tariffs.
 
-The sweep combines three models with three graph families. Testing three effort settings at each of two output caps gives $3\times3\times3\times2=54$ model-call configurations.
+The sweep combines three graph families with three effort settings at each of two output caps. Applying three model tariffs to those 18 execution profiles gives 54 model-call configurations.
 Immediate rejection is the 55th candidate.
 The single-call graph appears in Figure~\ref{fig:topologies}(a).
 The serial-review configurations use the graph in panel (c), where the first review can trigger one repair. The parallel configurations merge drafts as shown in panel (d).
-Within each configuration, every call uses the same model and request settings.
+Within each configuration, every call uses the same model and request settings. The workload and repair rates below are assigned for the numerical comparison. Section~\ref{sec:discussion} specifies the observations needed to evaluate alert triage.
 
 \begin{table}[H]
 \centering
@@ -648,9 +558,8 @@ The machine-readable registry specifies which parameter combinations each endpoi
 \end{table}
 
 \paragraph{Simulated outcomes for complete workflows.}
-The simulator gives the router the true task label, which distinguishes routine work ($g=0$) from migration work ($g=1$).
-The router selects a configuration from that label alone and uses the same routing probabilities in both scenarios.
-Scenario indices $(0,1)$ denote the nominal and adverse conditions, whose migration proportions are $(0.30,0.60)$ respectively.
+The simulator indexes groups and scenarios from zero. It gives the router the true task label, routine ($g=0$) or higher difficulty ($g=1$, named \texttt{migration} in the archived files).
+The router selects a configuration from that label alone and uses the same probabilities in both scenarios. The nominal and adverse scenarios have higher-difficulty shares of 30\% and 60\%, respectively.
 The simulation assigns zero overhead to the routing infrastructure, including classification.
 
 The attempt's difficulty $D$ affects the probability of a shared blind spot $B$.
@@ -682,7 +591,7 @@ The shared blind spot is a common cause of defects across calls. The repair sens
 
 Outside the blind spot, set $r=0.65p_{\rm draft}$. After a correct flag on a defective draft, the repair retains the original error with probability $0.50$. If the repair removes that error, it introduces a new defect with probability $r$.
 After a false flag on a sound draft, the baseline repair introduces a defect with probability $r$. In the sensitivity case, a draft that would otherwise stay sound acquires a defect with probability $0.20$. The total defect probability is $r+(1-r)0.20$.
-The proposed release-note study would estimate how often each transition occurs.
+The proposed triage study uses controlled upstream errors to distinguish persistence from newly introduced mistakes. The probabilities here are assigned.
 
 The parallel graph merges two concurrent drafts.
 A blind spot makes the merged draft defective. When $B=0$, its defect probability depends on how many of the two drafts contain defects.
@@ -720,36 +629,42 @@ The same routing rule must meet these limits in both scenarios.
 \delta=0.15 & \text{Allow at most 15\% of attempts to exceed } d=180\,\mathrm{s}.
 \end{array}
 \]
-An accepted output that exceeds the deadline has $(A,L)=(1,1)$.
+An accepted output that exceeds the deadline has $(A,L)=(1,1)$. The all-task comparison scores failure using~\eqref{eq:joint-failure}.
 
-With all 55 candidates, the optimal rule's highest expected cost is USD~0.0387983 per attempt. The adverse scenario attains that cost and all three service constraints bind there.
-The pool of single calls and immediate rejection is infeasible at these limits. Figure~\ref{fig:simulation-frontier} traces each pool's minimum cost as the defect limit varies.
+Under these three limits, the least costly mixture over all 55 candidates has a highest expected cost of USD~0.0387983 per attempt. All three constraints bind in the adverse scenario. There the policy returns an on-time, defect-free result for 59.82\% of attempts, so the failure rate is 40.18\%.
+Adding a 30\% ceiling on failure in each scenario raises the minimum cost to USD~0.0445436 per attempt. Figure~\ref{fig:joint-failure-frontier} compares the decision classes as the ceiling varies. At 30\%, excluding immediate rejection raises the unrestricted mixture's cost to USD~0.0483133. With the same candidate pool, requiring one topology family raises it to USD~0.0576039. The feasible family uses parallel drafts and attains a highest failure rate of 27.66\%. Requiring a single fixed configuration raises the minimum to USD~0.07677. This configuration uses parallel drafts at medium effort with a 4,096-token cap and has a highest failure rate of 26.18\%.
 
-The rule that meets the scenario-wide limits routes 30.39\% of migration attempts to immediate rejection (Figure~\ref{fig:simulation-routing}).
-In the adverse scenario it accepts 67.99\% of migration attempts, and 16.14\% of all migration attempts exceed the deadline.
-Material defects affect 10.17\% of accepted routine outputs in that scenario. Across both groups in the adverse scenario, 59.82\% of attempts yield an accepted result by the deadline without a material defect.
+\begin{figure}[tbp]
+\centering
+\input{figures/joint-failure-frontier.tikz.tex}
+\caption{Minimum worst-scenario expected cost at sampled all-task failure ceilings under the original acceptance, defect and lateness limits. Cost and failure count all submissions. A submission fails without a timely, defect-free result. The one-family and fixed-configuration comparisons use the same pool as the mixture excluding immediate rejection. The one-family policy may mix settings. Dots, squares and triangles mark feasible ceilings on a one-percentage-point grid. The line gives the attainable step for one fixed configuration. The ring shows the original mixture at its attained failure rate. The minima use the simulator's assigned probabilities.}
+\label{fig:joint-failure-frontier}
+\end{figure}
+
+The pool of single calls and immediate rejection is infeasible under the original limits. Figure~\ref{fig:simulation-frontier} shows how its minimum cost and the full pool's minimum cost vary with the conditional defect limit.
+The original mixture routes 30.39\% of higher-difficulty attempts to immediate rejection (Figure~\ref{fig:simulation-routing}). In the adverse scenario it accepts 67.99\% of higher-difficulty attempts, and 16.14\% of those attempts exceed the deadline. Material defects affect 10.17\% of accepted routine results in that scenario.
 
 Applying the limits within each task group raises the minimum worst-scenario expected cost from USD~0.0387983 to USD~0.0423768 per attempt, an increase of 9.22\%.
 Adding acceptance by the deadline to those group-level requirements raises the minimum to USD~0.0517655 per attempt. These calculations use the simulator's true task labels.
 
-Removing the immediate-rejection candidate raises the optimum to USD~0.0451785 per attempt. The new rule assigns the same 30.39\% of migration attempts to a high-effort single call with a cap of 4,096 generated tokens. A draft at that setting requires at least 5,000 tokens, so the cap truncates every assigned attempt and the workflow rejects it. Both optima have the same scenario-wide service outcomes. A limit on terminal rejection would count both routes. A fallback that completes the task would give those attempts a different terminal outcome.
+With only the original service limits, removing the immediate-rejection candidate raises the optimum to USD~0.0451785 per attempt. The new policy assigns the same 30.39\% of higher-difficulty attempts to a high-effort single call capped at 4,096 generated tokens. A draft at that setting requires at least 5,000 tokens, so truncation ends every assigned attempt in rejection. Both policies have the same scenario-wide service outcomes under those limits. Count failure at the end of any fallback the service owes.
 
-Table~\ref{tab:mix-sensitivity} varies the adverse scenario's 60\% migration share by one percentage point in either direction, holding the routing rule and group outcome coefficients fixed.
-Reoptimising with both endpoints as adverse scenarios and retaining the nominal scenario costs USD~0.0390235 per attempt, an increase of 0.58\%. At fixed coefficients, each cost or service inequality is affine in the migration share, so checking both endpoints covers the interval.
+Table~\ref{tab:mix-sensitivity} varies the adverse scenario's 60\% share of higher-difficulty tasks by one percentage point in either direction, holding the policy and group means fixed.
+Reoptimising with both endpoints as adverse scenarios and retaining the nominal scenario costs USD~0.0390235 per attempt, an increase of 0.58\%. At fixed coefficients, each cost or service inequality is affine in the task mix, so checking both endpoints covers the interval.
 
 \begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}rrrr@{}}
 \toprule
-Migration share & Acceptance & Defects among accepted & Lateness \\
+Higher-difficulty share & Acceptance & Defects among accepted & Lateness \\
 \midrule
 59\% & 80.3002\% & 10.0034\% & 14.9716\% \\
 60\% & 80.0000\% & 10.0000\% & 15.0000\% \\
 61\% & 79.6998\% & 9.9966\% & 15.0284\% \\
 \bottomrule
 \end{tabular}
-\caption{Adverse-scenario outcomes for the original routing rule as the migration share varies. At 59\% the defect fraction exceeds its limit. At 61\% acceptance falls below its minimum and lateness exceeds its limit.}
+\caption{Adverse-scenario outcomes for the original policy as the higher-difficulty share varies. At 59\% the defect fraction exceeds its limit. At 61\% acceptance falls below its minimum and lateness exceeds its limit.}
 \label{tab:mix-sensitivity}
 \end{table}
 
@@ -766,9 +681,9 @@ Proposition~\ref{prop:reduction} guarantees that an optimal vertex solution exis
 The reduced-cost search begins with 18 single-call candidates plus immediate rejection.
 A serial-review configuration with high reasoning effort and an 8,192-token cap per call makes the starting pool feasible, bringing its total to 20.
 At the fourth solve, the pool has grown to 23 candidates and its minimum cost matches the full-pool minimum to within USD~$10^{-10}$ per attempt.
-At each step, the search compares every remaining configuration using its enumerated coefficients. To test whether the search reduces workflow executions, choose which configuration to evaluate before collecting its outcome data.
+At each step, the search consults every remaining configuration's enumerated coefficients. The 23-configuration solution verifies the reduced-cost computation on this finite pool. To test evaluation savings, select each candidate before measuring it. Compare the methods under equal development budgets and calibrate the selected pools on fresh runs.
 
-To assess selection when the coefficients must be estimated, draw a fresh synthetic sample.
+To assess selection under the original acceptance, conditional defect and lateness limits when the coefficients must be estimated, draw a fresh synthetic sample. This experiment uses the four means that appear in those limits and the objective.
 Each cell represents one configuration for one task group in one scenario. For each of the 216 cells with unknown coefficients, take a multinomial draw equivalent to 20,000 independent synthetic trials, for a total of 4.32 million trials.
 Use each cell's maximum terminal charge as its cost cap.
 Use the known coefficients for immediate rejection.
@@ -798,6 +713,11 @@ The probability of returning a rule that violates a population service requireme
 In this sample, all three methods' bounds cover their corresponding population values.
 Figure~\ref{fig:simulation-calibration} shows how the separate Hoeffding results change with sample size.
 
+\paragraph{Cost gap with all-task failure.}
+Rescore the same synthetic draws for $F$ and construct both endpoints for each of the five means. With 216 uncertain cells, the Hoeffding radius is $0.0163352$ at $\alpha=0.05$. All 2,160 endpoints cover the enumerated means on this draw.
+At a 30\% failure ceiling and the original service limits, the optimistic programme gives USD~0.0372241 per attempt and the conservative programme gives USD~0.0558149. Their difference bounds the selected policy's excess cost by USD~0.0185908 per attempt. The exact minimum is USD~0.0445436.
+At a 19\% ceiling, enumeration still gives a feasible policy, while the conservative programme gives no recommendation. The example illustrates the two decisions on one fixed sample. Estimating how often the procedure returns a policy requires repeated draws.
+
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=\linewidth]{figures/cost-risk-frontier.pdf}
@@ -814,10 +734,10 @@ At a 10\% defect limit, the full pool attains USD~38.80 per 1,000 attempts.}
 \begin{figure}[tbp]
 \centering
 \includegraphics[width=.9\linewidth]{figures/selected-routing.pdf}
-\caption{Optimal routing by task group under scenario-wide service limits.
+\caption{Optimal routing by task group under the original scenario-wide service limits.
 Bars give each route's share of attempts within the group, including immediate rejection.
 Each label specifies the effort setting at the chosen per-call token cap.
-All model-call routes use \texttt{gemini-4-hydrogen}, which costs least under the shared execution laws.}
+The plotted label \texttt{migration} denotes the higher-difficulty group. All model-call routes use \texttt{gemini-4-hydrogen}, whose tariff costs least under the shared execution laws.}
 \label{fig:simulation-routing}
 \end{figure}
 
@@ -840,11 +760,11 @@ The plotted rules satisfy $(a_k\ge\gamma,\ \ell_k\le\delta)$ in every scenario.}
 Routing can change the workload a queue receives. When the router uses a load signal, its own routing decisions can change the distribution of that signal.
 Suppose two tasks arrive together. Each independently chooses service 1 with probability $p$ and service 2 otherwise. A service completes a lone task on time. If both tasks go to the same service, both finish late.
 A task sent to service 1 finishes late with probability $p$, the chance that the other task also chooses that service. A task sent to service 2 finishes late with probability $1-p$. The overall probability of lateness is $p^2+(1-p)^2$.
-Isolated tests with one task per service give zero lateness. With both tasks present, every independent mixture has at least 50\% lateness and exceeds a 15\% limit. Assigning one task to each service keeps both on time.
+Isolated tests with one task per service give zero lateness. With both tasks present, every such independent mixture has at least 50\% lateness and exceeds a 15\% limit. Assigning one task to each service keeps both on time.
 
 Use the linear programme where measurements or a justified capacity model support constant coefficients across the permitted routing rules. Capacity isolation can support that assumption if it covers the workload and every measured outcome.
 For a conservative programme, use bounds that hold across the permitted mixes. A bound for one tested mix applies to that mix under its measured conditions.
-If outcomes vary with the mix and uniform bounds are unavailable, compare a finite set of complete routing rules. For each rule, run independent repeats of a fixed-size workload at the intended arrival rate. Use the run as the sampling unit to allow for dependence between attempts in the same queues.
+If outcomes vary with the mix and uniform bounds are unavailable, compare a finite set of complete policies. For each policy, repeat a fixed-size workload independently at the intended arrival rate. Start each run from a declared state and use its mean cost and failure rate as observations. This allows dependence between attempts in the same queue. For a group-specific failure ceiling, estimate the per-run mean of the group indicator and the mean of its product with failure, including runs with zero group members. The ratio of their expectations gives the failure rate among tasks in the group when the denominator is positive. The corresponding service inequality compares the numerator with the ceiling times the denominator.
 For a fixed rule, each cost and service inequality is affine in the group proportions. When the conditional coefficients stay fixed and the group proportions range over a justified polytope, check the inequalities at its vertices. If proportions also change the load or the distribution within a group, specify scenarios or bounds that cover those changes.
 
 Write $T_0$ for execution time excluding added queue delay $W$.
@@ -859,14 +779,19 @@ If $\Pr(W>Q\mid g,\theta_j,k)\le\eta$ in every cell, the lateness probability is
  \min\{1,\Pr(T_0+Q>d\mid g,\theta_j,k)+\eta\}.
 \]
 Bound each remaining load-sensitive outcome separately.
+If waiting changes timing alone, a defect-free accepted result with $T_0\le d-Q$ still meets the deadline whenever $W\le Q$. In each cell the failure probability in~\eqref{eq:joint-failure} is therefore at most
+\[
+ \min\{1,1-\Pr(A-Y=1,\ T_0\le d-Q)+\eta\},
+\]
+where the probability uses that cell's outcomes before adding queue delay. Apply this bound only if the disposition and defect status stay valid as the task waits.
 
-In the simulation, immediate rejections bypass the queue.
+The following numerical comparisons use the original acceptance, conditional defect and lateness limits. In the simulation, immediate rejections bypass the queue.
 Allowing up to 5\,s of added queue delay raises the adverse-scenario upper bound on lateness for the original optimal rule to 15.33\%.
 Reoptimising at the 15\% limit costs USD~0.0388967 per attempt.
 With a 30\,s delay cap, the minimum cost rises to USD~0.0407027 per attempt.
 A delay cap of 50\,s makes the conservative programme infeasible.
 
-Define the service deadline from intake. If acceptance requires publication by that deadline, use
+Define the service deadline from intake. If acceptance requires a result by that deadline, use
 \[
  A'=A(1-L),\qquad Y'=Y(1-L).
 \]
@@ -875,52 +800,87 @@ Under the original duration distribution, the rule optimised for scenario-wide s
 Reoptimising at the same limits with acceptance by the deadline costs USD~0.0477038 per attempt.
 When delay can change which outputs meet the deadline, bound the fraction with material defects among the outputs accepted on time.
 
-If the team remains responsible for a note after automated rejection, measure the submitted task through rework and any fallback. End the observation when the workflow meets the publication rule or declares terminal failure.
+If the service remains responsible for a task after automated rejection, measure rework and fallback until it fulfils the service obligation or reaches terminal failure.
 If each task must yield an accepted result, set the minimum acceptance rate to one. Justify that value from the fallback's guarantees, since failure can remain possible after any finite run of successes.
-Expected cost per accepted note is expected cost per attempt divided by the acceptance probability. For one scenario this gives a linear-fractional objective~\cite{boyd}.
+If the service accounts per accepted result, divide expected cost per submitted task by the acceptance probability. For one scenario this gives a linear-fractional objective~\cite{boyd}.
 An upper confidence bound on $\E[T]$ can enforce a mean-time requirement.
 A weighted cost--time objective requires a preference weight applied to quantities with explicit normalising units.
 
-If the service promise applies to actual migrations, have assessors assign the service label $H$ from the change records without seeing the intake classifier's output $G$. Use $G$ for routing and apply the service constraints by $H$ using~\eqref{eq:service-group-mean}.
+If a requirement applies by incident severity, have assessors assign the service label $H$ from the incident evidence without seeing the intake classifier's output $G$. Use $G$ for routing and apply the service constraints by $H$ using~\eqref{eq:service-group-mean}.
 
-\paragraph{Proposed release-note study.}
-Sample eligible work at intake, before the publication decision. Retain changes whose notes are later deferred or abandoned.
-ReleaseEval supplies development cases linked to commits and diffs. Its published-note selection and filters can exclude simple changes and unpublished work~\cite{releaseeval2026}.
-Recover the change description and the supporting records available before drafting. Identify the intended readers and use those records to determine which instructions they need. Derive those requirements independently of any published note and use them to judge which changes require migration and which defects are material.
-Set the service limits and the smallest cost difference worth measuring. Choose sample sizes that support both checking those limits and measuring that difference.
-A frozen publication rule determines $A$ for each workflow result. In an offline trial it determines whether the workflow would publish the note. Assessors apply the rubric without seeing that decision or the workflow variant. Set $Y=1$ when the workflow would publish a note with a material defect.
+\paragraph{Proposed study of Kubernetes alert triage.}
+Sample eligible service alerts at intake and retain genuine degradations, false alarms and cases with incomplete evidence.
+Give each candidate only evidence available at the time it could request it.
+Set deadlines and failure limits with the service owner, including any distinct limit on false reassurance for severe alerts.
+A valid disposition is a timely brief supported by the available evidence, a justified finding of no incident, or an appropriate handoff completed under the service agreement.
+Count each alert once, including those with a failed handoff or no disposition.
+Use later incident findings to establish service status where possible. Judge the recommendation against what the candidate could know at the time. Retain cases whose failure status remains unresolved. Their contribution to the lower and upper failure counts is zero and one, respectively.
+Assess dispositions against a fixed rubric with assessors unaware of the workflow variant, and adjudicate disagreements.
 
-Controlled peer-answer experiments show that an incorrect upstream message can overturn a correct answer~\cite{haMitchell2026,gong2026upstream}. Separating the verification answers from the original draft reduced repeated factual errors in the tasks studied by Dhuliawala et al.~\cite{dhuliawala2024cove}.
+\begin{center}
+\small
+\begin{tabular}{@{}lp{0.63\linewidth}@{}}
+\toprule
+Candidate & Information flow and decision rule \\
+\midrule
+Incumbent & Existing rules and runbook with the current on-call fallback. \\
+Single agent & One agent queries the available evidence and returns the disposition. \\
+Serial review & A second agent reads the initial brief and checks its claims against telemetry. \\
+Parallel specialists & Telemetry and deployment specialists form findings separately before a merge. \\
+Selective review & Run the same review only when a fixed evidence check triggers it. \\
+\bottomrule
+\end{tabular}
+\end{center}
+Compare the two review policies on the same missing-evidence check.
+In comparisons intended to isolate topology, hold model versions, tool access and aggregate resource limits fixed and keep equivalent prompts aligned by role.
+Tune deployable configurations under equal development budgets and compare them under the same service contract.
+Give the single agent access to the same sources and tools and let all candidates escalate when warranted.
 
-For each development task, verify a draft against the source records and prepare a copy with one material defect, such as the wrong migration instruction. Keep the rest of the draft and its format the same.
-For each draft, run the same serial-review configuration with and without direct access to the change description, following the message-masking method of Li et al.~\cite{e2explainer2026}.
-Keep the other inputs and execution rules fixed. Let each run generate its own review messages and follow the resulting branches. Run the four conditions in random order at comparable load and start each run with a fresh context.
+\paragraph{Testing error propagation.}
+Controlled peer-answer studies give examples of downstream answers changing after exposure to a wrong upstream response~\cite{haMitchell2026,gong2026upstream}.
+Answering verification questions without showing the original draft reduced repeated factual errors on the tasks studied by Dhuliawala et al.~\cite{dhuliawala2024cove}.
+For a specified reviewer connection, select alerts on which independent assessment can establish a material error. Prepare two upstream messages that differ only in the hypothesis and the wording needed to state it.
+Let $M=1$ assign the misleading hypothesis and $M=0$ the supported alternative.
+Cross this assignment with access $V\in\{0,1\}$ to the relevant source telemetry.
+Run all four combinations in random order for each alert and reset state between runs.
+Hold other access and settings fixed and let the assigned inputs affect the execution path.
+An error in the system being diagnosed and a mistaken claim repeated by agents are different observations.
 
-Record whether the reviewer finds the planted defect and whether it flags a sound draft. If it recommends a change, assess whether the source supports that advice and whether the repair follows it.
-Assess any final note independently for the original error and for new defects. Use the publication decision to identify attempts on which the workflow withholds the note.
-Within each source-access condition, compare the paired drafts' final outcomes to estimate the effect of the planted defect. The difference between those estimates measures how access to the change description modifies that effect.
-Use the paired observations to estimate changes in publication and defects, including the score $Y-\varepsilon A$. Give uncertainty by operating scenario and independently assessed task group.
-In the controlled comparison, measure time and cost from the start of review to the terminal decision. To estimate all four outcomes in~\eqref{eq:outcomes}, start each candidate at intake and let it produce its own draft.
+Let $U$ indicate that a downstream agent asserted the planted false proposition or used it as a premise.
+Score the same proposition in both message arms, including cases where no agent uses it.
+For $Z\in\{U,F\}$, estimate the difference in risk between assignments
+\[
+ \Delta_Z(v)=\Pr(Z=1\mid M=1,V=v)-\Pr(Z=1\mid M=0,V=v).
+\]
+Use all assignments, including replays that bypass review, and allow for pairing by alert in uncertainty estimates. Score task failure from the disposition and use execution traces to assess downstream reuse.
+The difference $\Delta_Z(1)-\Delta_Z(0)$ estimates how access to telemetry modifies that effect.
+Record newly introduced errors separately.
+The contrast estimates the effect of replacing a supported message with a misleading one. Complete runs from intake, with each candidate generating its own messages and using its fallback, estimate the service outcomes used to select a policy. A service limit on an error reaching a consequential recommendation uses its frequency in these complete runs.
 
-If development results warrant selective specialist review, test a flag-triggered policy against an always-call baseline.
-Each policy performs the same missing-evidence check under fixed role-specific prompts.
-The flag-triggered policy calls a migration specialist exactly when the check raises a flag.
-Measure $(C,T)$ over the complete execution, including every check.
-Start each task from the same controller state. Updating state across attempts, as in MetaGen~\cite{metagen2026}, would require validation of the complete policy over task sequences.
+\paragraph{Estimating deployment outcomes.}
+Use telemetry from RCAEval for controlled replay and AIOpsLab for interactive trials with specified faults and workloads~\cite{phamRcaEval2025,chenAiOpsLab2025}.
+Use these trials to develop candidates and test the measurement protocol. Run the candidates in shadow on the target alert intake alongside the incumbent response. A shadow run can measure the candidate's disposition and execution cost. Use executable workload trials or justified bounds for outcomes that depend on live handoff, rework or other actions beyond the shadow run.
+Keep repeated alerts from the same incident within one data split and test transfer on held-out services or time periods.
+Freeze eligible candidates, the intake classifier, the rubric and the service limits before calibration.
+Choose sample sizes to resolve the failure limits and the smallest cost difference that matters for deployment.
+Confirm the selected policy on a further sample under the intended load, including burst arrivals and degraded telemetry where relevant.
+If shared resources change outcomes with the routing mix, compare complete policies in independently repeated workloads and treat each workload as the sampling unit.
 
-Use development runs to shortlist complete configurations. Freeze those configurations and the intake classifier before collecting a fresh sample for the confidence bounds. Use the bounds to select a routing rule when the coefficients apply across the permitted mixtures. If shared capacity requires testing whole policies, freeze the candidate rules and estimate their service outcomes from independent workload runs.
-Evaluate the selected rule at the intended load on a separate sample. Compare it with the incumbent pipeline and a tuned single-call workflow under the same service limits. Give the single call the same source evidence and allow it to abstain.
-Report the outcome means in~\eqref{eq:outcomes} and the defect fraction among accepted notes. Include the share of submitted tasks accepted on time without a material defect, $\E[(A-Y)(1-L)]$. Give uncertainty by scenario and for actual migrations.
-A study of peer coordination would require a separate comparison in which agents hold different parts of the relevant evidence.
+Measure elapsed time through the required fallback in executable trials.
+Include model and telemetry charges, orchestration and responder labour in the cost.
+Report which outcomes come from shadow observations and which depend on bounds or assumptions about live execution.
+Report failure and cost bounds by scenario and independently assigned service group, together with the denominator and the rates of serious errors, lateness and escalation.
+Compare the savings with one-off search and evaluation costs over the intended deployment horizon.
+A study of recovery time would also need to observe the actions taken after triage.
 
-Testing $J$ workflows on $N$ tasks each with a limit of $M$ calls per attempt uses at most $NJM$ calls per scenario before independent assessment.
-Report the cost of each stage, including independent assessment. Compare one-off search expenditure with expected deployment savings.
+A second application could ask whether to advance, pause or revert a canary against an existing rollout gate~\cite{sreCanarying2018}.
+That application supplies its own deadlines, failure criteria and policy measurements.
 
 \appendix
 \FloatBarrier
 \section{An exact arithmetic check}
 \label{app:exact}
-The reproduction script uses rational arithmetic to check the optimum before and after adding a configuration.
+The reproduction script uses rational arithmetic to check the optimum under the acceptance, conditional defect and lateness limits before and after adding a configuration. This example uses the vacuous all-task ceiling $\tau=1$.
 
 The following coefficients define the nominal scenario. Entries follow candidate order.
 \[
