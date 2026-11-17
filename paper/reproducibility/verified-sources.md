@@ -101,3 +101,12 @@ These studies motivate measuring propagation and correction during triage. The s
 | `chenAiOpsLab2025` | [MLSys proceedings](https://proceedings.mlsys.org/paper_files/paper/2025/hash/d1f9e4a9f109b6e8b75ed362736f22ec-Abstract-Conference.html). | Supplies a controlled environment with faults, workloads and telemetry. |
 | `sreCanarying2018` | [Site Reliability Workbook](https://sre.google/workbook/canarying-releases/), Requirements on Monitoring Data. | Supports the example of a decision comparing canary signals with a control. |
 | `mavrotas2009` | [Applied Mathematics and Computation](https://doi.org/10.1016/j.amc.2009.03.037). | Attributes the use of a ceiling on one objective while minimising another. |
+
+## Agentic workflow patterns checked on 17 November 2026
+
+| BibTeX key | Evidence location | Use |
+| --- | --- | --- |
+| `anthropicEffectiveAgents2024` | [Anthropic Engineering](https://www.anthropic.com/research/building-effective-agents), workflow patterns. | Describes fixed chaining with gates, routing, preassigned parallel work, runtime delegation and evaluation with feedback. |
+| `yaoReact2023` | [ICLR 2023 camera-ready paper](https://arxiv.org/abs/2210.03629v3), abstract and Sections 2–3. | Describes interleaved reasoning, action and observations in a tool-using loop. |
+| `shinnReflexion2023` | [NeurIPS 2023 proceedings](https://proceedings.neurips.cc/paper_files/paper/2023/hash/1b44b878bb782e6954cd888628510e90-Abstract-Conference.html), abstract and Section 3 of the paper. | Describes verbal feedback stored in episodic memory across trials. |
+| `duDebate2024` | [ICML 2024 proceedings](https://proceedings.mlr.press/v235/du24e.html), abstract and Section 4 of the paper. | Describes agents exchanging prior responses over multiple rounds. Panel (h) gives a shared-state implementation with its own stopping rule. |
