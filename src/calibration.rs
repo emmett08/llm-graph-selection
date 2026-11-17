@@ -1,4 +1,4 @@
-//! One-sided cell bounds for routing among a frozen set of workflows.
+//! Simultaneous cell bounds for routing among a frozen set of workflows.
 //!
 //! Freeze the candidate set, task classifier, sampling plan and method before
 //! collecting calibration observations. Use independent representative draws
@@ -6,7 +6,7 @@
 //! Paired methods also require a fixed defect tolerance before calibration.
 //! The supplied cost cap must hold for every attempt in the cell.
 
-use crate::{Error, Moments, RiskBound};
+use crate::{Cell, Error, Moments, OutcomeMeans, RiskBound};
 
 /// One attempted workflow execution, including any rejection or lateness.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -31,6 +31,107 @@ pub struct CalibrationCell {
     pub total_cost: f64,
     /// A known upper bound on the cost of any attempt in this cell.
     pub cost_cap: f64,
+}
+
+/// Sufficient statistics for five outcome means, including task failure.
+/// Count failures across all attempts using the service's failure criterion.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FailureCalibrationCell {
+    pub summary: CalibrationCell,
+    pub failed: u64,
+}
+
+impl FailureCalibrationCell {
+    /// Summarise attempts when success requires timely, defect-free acceptance.
+    pub fn from_attempts(attempts: &[AttemptSample], cost_cap: f64) -> Result<Self, Error> {
+        let summary = CalibrationCell::from_attempts(attempts, cost_cap)?;
+        let failed = attempts
+            .iter()
+            .filter(|attempt| !attempt.accepted || attempt.defective || attempt.late)
+            .count() as u64;
+        Ok(Self { summary, failed })
+    }
+
+    /// Bound all five means in both directions. Use the same family error and
+    /// total number of uncertain cells for every cell. Each of the ten
+    /// one-sided bounds uses error probability alpha / (10 * uncertain_cells).
+    pub fn calibrate(&self, alpha: f64, uncertain_cells: usize) -> Result<Cell, Error> {
+        let summary = self.summary;
+        summary.validate()?;
+        if self.failed > summary.attempts {
+            return Err(invalid("failed attempts exceed the attempt count"));
+        }
+        let n = summary.attempts as f64;
+        let mean = OutcomeMeans {
+            moments: Moments {
+                acceptance: summary.accepted as f64 / n,
+                joint_defect: summary.accepted_defects as f64 / n,
+                cost: summary.total_cost / n,
+                lateness: summary.late as f64 / n,
+            },
+            failure: self.failed as f64 / n,
+        };
+        let (lower, upper) = calibrate_mean_endpoints(
+            mean,
+            summary.attempts,
+            summary.cost_cap,
+            alpha,
+            uncertain_cells,
+        )?;
+        Ok(Cell::Interval { lower, upper })
+    }
+}
+
+/// Bound either attempt averages or averages of independently repeated
+/// workload means. In the latter case `observations` counts workloads.
+pub(crate) fn calibrate_mean_endpoints(
+    mean: OutcomeMeans,
+    observations: u64,
+    cost_cap: f64,
+    alpha: f64,
+    uncertain_cells: usize,
+) -> Result<(OutcomeMeans, OutcomeMeans), Error> {
+    Cell::PointWithFailure(mean).validate()?;
+    if observations == 0 {
+        return Err(invalid("calibration requires at least one observation"));
+    }
+    let cost = mean.moments.cost;
+    if !cost_cap.is_finite() || cost_cap < 0.0 || cost - cost_cap > 8.0 * f64::EPSILON * cost {
+        return Err(invalid(
+            "mean cost must not exceed a finite non-negative cost cap",
+        ));
+    }
+    let radius =
+        (log_inverse_failure(alpha, uncertain_cells, 10.0)? / (2.0 * observations as f64)).sqrt();
+    let endpoint = |direction: f64| {
+        let proportion = |value: f64| (value + direction * radius).clamp(0.0, 1.0);
+        OutcomeMeans {
+            moments: Moments {
+                acceptance: proportion(mean.moments.acceptance),
+                joint_defect: proportion(mean.moments.joint_defect),
+                cost: (cost.min(cost_cap) + direction * cost_cap * radius).clamp(0.0, cost_cap),
+                lateness: proportion(mean.moments.lateness),
+            },
+            failure: proportion(mean.failure),
+        }
+    };
+    Ok((endpoint(-1.0), endpoint(1.0)))
+}
+
+fn log_inverse_failure(
+    alpha: f64,
+    uncertain_cells: usize,
+    bounds_per_cell: f64,
+) -> Result<f64, Error> {
+    if !(alpha > 0.0 && alpha < 1.0) {
+        return Err(invalid(
+            "family error alpha must be strictly between zero and one",
+        ));
+    }
+    if uncertain_cells == 0 {
+        return Err(invalid("the uncertain cell count must be positive"));
+    }
+    Ok(bounds_per_cell.ln() + (uncertain_cells as f64).ln() - alpha.ln())
 }
 
 /// Prespecified construction for the conditional defect constraint.
@@ -114,20 +215,11 @@ impl CalibrationCell {
         method: CalibrationMethod,
     ) -> Result<CalibratedCell, Error> {
         self.validate()?;
-        if !(alpha > 0.0 && alpha < 1.0) {
-            return Err(invalid(
-                "family error alpha must be strictly between zero and one",
-            ));
-        }
-        if uncertain_cells == 0 {
-            return Err(invalid("the uncertain cell count must be positive"));
-        }
-
         let n = self.attempts as f64;
         let acceptance = self.accepted as f64 / n;
         let joint_defect = self.accepted_defects as f64 / n;
         let mean_cost = (self.total_cost / n).min(self.cost_cap);
-        let log_inverse_failure = 4.0_f64.ln() + (uncertain_cells as f64).ln() - alpha.ln();
+        let log_inverse_failure = log_inverse_failure(alpha, uncertain_cells, 4.0)?;
         let radius = (log_inverse_failure / (2.0 * n)).sqrt();
 
         let risk = match method {
@@ -265,6 +357,62 @@ fn invalid(message: &str) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn calibrates_five_means_with_ten_bounds_per_uncertain_cell() {
+        let tally = FailureCalibrationCell {
+            summary: CalibrationCell {
+                attempts: 20_000,
+                accepted: 16_000,
+                accepted_defects: 1_000,
+                late: 2_000,
+                total_cost: 4_000.0,
+                cost_cap: 0.5,
+            },
+            failed: 5_000,
+        };
+        let Cell::Interval { lower, upper } = tally.calibrate(0.05, 7).unwrap() else {
+            panic!("expected two-sided bounds");
+        };
+        let radius = ((10.0_f64 * 7.0 / 0.05).ln() / (2.0 * 20_000.0)).sqrt();
+        assert!((lower.failure - (0.25 - radius)).abs() < 1e-12);
+        assert!((upper.failure - (0.25 + radius)).abs() < 1e-12);
+        assert!((lower.moments.cost - (0.2 - 0.5 * radius)).abs() < 1e-12);
+        assert!((upper.moments.acceptance - (0.8 + radius)).abs() < 1e-12);
+        assert!(FailureCalibrationCell {
+            failed: 20_001,
+            ..tally
+        }
+        .calibrate(0.05, 7)
+        .is_err());
+    }
+
+    #[test]
+    fn tallies_joint_failure_from_attempts() {
+        let clean = AttemptSample {
+            accepted: true,
+            defective: false,
+            cost: 0.0,
+            late: false,
+        };
+        let attempts = [
+            clean,
+            AttemptSample {
+                defective: true,
+                late: true,
+                ..clean
+            },
+            AttemptSample {
+                accepted: false,
+                late: true,
+                ..clean
+            },
+        ];
+        let tally = FailureCalibrationCell::from_attempts(&attempts, 0.0).unwrap();
+        assert_eq!(tally.failed, 2);
+        assert_eq!(tally.summary.late, 2);
+        assert_eq!(tally.summary.accepted_defects, 1);
+    }
 
     #[test]
     fn raw_attempts_retain_counts_and_rejection_costs() {
