@@ -113,7 +113,7 @@ Figure~\ref{fig:graph} shows a workflow that repairs a first triage brief when a
 
 A fixed graph with guarded edges can represent a controller that chooses among a bounded set of routes after seeing earlier results.
 For example, a failed evidence check can trigger a specialist review.
-Fix the controller's call budget and start each attempt from the same frozen state.
+For comparisons that treat attempts as fresh draws, fix the controller's call budget and start each attempt from the same frozen state.
 Section~\ref{sec:discussion} considers how state that persists across attempts changes the evaluation required.
 
 \begin{figure}[htbp]
@@ -123,7 +123,7 @@ Section~\ref{sec:discussion} considers how state that persists across attempts c
 \label{fig:graph}
 \end{figure}
 
-Figure~\ref{fig:topologies} illustrates nine arrangements, from a single call to a peer exchange.
+Figure~\ref{fig:topologies} compares seven coordination patterns and two reference configurations. The panels show who chooses the next operation and what information that operation receives.
 
 \begin{figure}[htbp]
 \centering
@@ -132,20 +132,17 @@ Figure~\ref{fig:topologies} illustrates nine arrangements, from a single call to
 \label{fig:topologies}
 \end{figure}
 
-The arrows show the dependencies between operations. During execution, the schedule and edge guards determine which call can run next.
-Panel (f) uses initial task classification to select a route from the available generalist/specialist pair.
-A supervisor determines the work allocation in (g), then combines the workers' results.
-The handoff in (h) transfers control to a specialist with the intake agent's working state~\cite{runkleArchitectures2026}.
-Peer exchange in (i) lets each agent read the other's message in the second round.
-A deterministic check accepts exactly when the results match at the round limit.
+In the single-agent loop (b), one agent can use a tool result to choose its next action or review its work before stopping. ReAct interleaves reasoning and actions, using observations to guide subsequent steps~\cite{yaoReact2023}. Reflexion retains verbal feedback across trials~\cite{shinnReflexion2023}. If that memory carries across submitted tasks, the evaluation needs to account for it.
 
-Nesting supervisor calls creates a hierarchy that can permit peer exchange within supervised groups.
-Operations can also exchange information through a shared store or receive messages through an event broker.
-For either mechanism, define when the attempt ends and record every transfer that can affect an operation before then~\cite{agentPatternsTopology,huangTopologies2026}.
+The sequential pipeline (c) fixes the order of stages. A validation gate can stop an invalid result before it reaches the next stage. The router (d) classifies the request at intake and selects a specialist route. That choice can determine which evidence or tools the workflow uses. A handoff can also transfer execution control and working state to a specialist after work has begun~\cite{runkleArchitectures2026}.
+
+Parallel fan-out (e) assigns work in advance and combines the results. The orchestrator in (g) chooses subtasks after reading the request and synthesises the findings its workers return. An evaluator--optimiser loop (f) checks a draft against explicit criteria and sends feedback to the generator. Revision can repeat until the evaluator accepts the result or the budget ends the loop~\cite{anthropicEffectiveAgents2024}. In the one-repair review (i), a clear first review releases the draft. A flag leads to one repair and a final check.
+
+In the decentralised debate (h), peers read and write shared notes and follow a common stopping rule. Multi-agent debate can also exchange prior responses directly between peers~\cite{duDebate2024}. Supervisors can delegate to further supervisors, whose workers may exchange messages within their groups. A shared store or event broker can carry such exchanges. Specify the stopping rule and record the transfers that can affect an operation~\cite{agentPatternsTopology,huangTopologies2026}.
 A study of trained multi-agent reinforcement learning found coordination effects from communication order, with depth also affecting its grid-world results~\cite{zhangMarlTopology2025}.
 For the LLM workflows considered here, complete executions supply the observations needed to estimate service outcomes.
 
-The router selects a configuration using the observed task group $G=g$, where $g\in\{1,\ldots,n_g\}$.
+The deployment router selects a configuration using the observed task group $G=g$, where $g\in\{1,\ldots,n_g\}$.
 The same routing rule applies in every scenario $k\in\{1,\ldots,K\}$. Each scenario fixes the operating conditions and the task distribution.
 Within a scenario, the known task-group proportions $\mu_{gk}$ satisfy $\mu_{gk}\ge0$, $\sum_g\mu_{gk}=1$.
 Any additional router input must be represented within the group definition, unless the configuration's execution rules already account for it.
@@ -534,7 +531,7 @@ The simulator applies the same outcome and token laws to every provider and calc
 The sweep combines three graph families with three effort settings at each of two output caps. Applying three model tariffs to those 18 execution profiles gives 54 model-call configurations.
 Immediate rejection is the 55th candidate.
 The single-call graph appears in Figure~\ref{fig:topologies}(a).
-The serial-review configurations use the graph in panel (c), where the first review can trigger one repair. The parallel configurations merge drafts as shown in panel (d).
+The serial-review configurations use the graph in panel (i), where the first review can trigger one repair. The parallel configurations merge and check the two drafts shown in panel (e).
 Within each configuration, every call uses the same model and request settings. The workload and repair rates below are assigned for the numerical comparison. Section~\ref{sec:discussion} specifies the observations needed to evaluate alert triage.
 
 \begin{table}[H]
